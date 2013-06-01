@@ -2,16 +2,12 @@ package twitter.app;
 
 import twitter4j.TwitterException;
 
-public class Loader {
-
-	/**
-	 * @param args
-	 * @throws TwitterException 
-	 */
-	public static void main(String[] args) throws TwitterException {
-		// TODO Auto-generated method stub
+public class Loader {	
+	
+	public static void main(String[] args) throws TwitterException {		
 		Interface i = new Interface();
-		i.setVisible(true);	
+		i.mainInterface();
+		//i.setVisible(true);					
 
 	}
 

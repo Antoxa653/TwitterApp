@@ -1,75 +1,105 @@
 package twitter.app;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
+import javax.swing.Box;
 
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.ListModel;
-
-import twitter4j.Status;
+import javax.swing.border.EmptyBorder;
 import twitter4j.TwitterException;
 
 public class Interface extends JFrame {
 	
-	OAuth oa = new OAuth();
-	UpdateTimeLine utl = new UpdateTimeLine();
-	private JButton button = new JButton("Send");
-	private JButton updateButton =new JButton("Update");
-	private JTextArea textArea = new JTextArea();	
-	private DefaultListModel<String> listModel = new DefaultListModel<String>();
-	private JList<String> list = new JList<String>(utl.getTimeLine(listModel));
-	private JScrollPane listScroll = new JScrollPane(list);
+
+	JButton sendButton;
+	JButton updateButton;
+	JTextArea statusArea;
+	JList<String> list;
+	JFrame frame;
+	public Interface() {
+		frame = new JFrame("Twitter Application");
+		frame.setSize(1000, 400);
+	}
 	
-	public Interface() throws TwitterException{
-		super("Twitter Application");		
-		this.setBounds(400, 400, 700, 400);		
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		Container container = this.getContentPane();
-		container.setLayout(new GridLayout());
-		button.addActionListener(new  ButtonEventListener());
+	public void mainInterface() throws TwitterException{		
+		//JFrame frame = new JFrame("Twitter Application");
+		//frame.setSize(1000, 400);
+		Box box1 = Box.createHorizontalBox();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		sendButton = new JButton("Send");
+		updateButton = new JButton("Update");
+		box1.add(sendButton);
+		box1.add(Box.createHorizontalStrut(150));
+		box1.add(updateButton);
+		Box box2 = Box.createHorizontalBox();
+		statusArea = new JTextArea(10, 20);
+		statusArea.setLineWrap(true);
+		statusArea.setWrapStyleWord(true);		
+		list = listCreation();
+		list.setVisibleRowCount(20);
+		list.setSize(200, 200); 		
+		box2.add(statusArea);
+		box2.add(Box.createHorizontalStrut(10));
+		box2.add(displayList());		
+		Box mainBox =Box.createVerticalBox();
+		mainBox.setBorder(new EmptyBorder(12,12,12,12));
+		mainBox.add(box1);
+		mainBox.add(Box.createVerticalStrut(10));
+		mainBox.add(box2);
+		frame.setContentPane(mainBox);		
+		pack();
+		frame.setResizable(false);		
+		sendButton.addActionListener(new ButtonEventListener());
 		updateButton.addActionListener(new UpdateButtonListener());
-		container.add(button);
-		container.add(updateButton);
-		container.add(textArea);		
-        list.setLayoutOrientation(JList.VERTICAL_WRAP);
-		list.setVisibleRowCount(-1);			
-		container.add(list);
+		frame.setVisible(true);
+	}
+	public JList<String> listCreation() throws TwitterException{
+		UserTimeLine utl =new UserTimeLine();	
+		list =new JList<String>(utl.getTimeLine());
+		return list;
+	}
+	public JList<String> displayList() throws TwitterException{
+		list = listCreation();
+		list.setVisibleRowCount(20);
+		list.setSize(200, 200);
+		return list;
 		
 	}
+	
+	
 	
 	class ButtonEventListener implements ActionListener{
-		public void actionPerformed(ActionEvent e){			
-			if(textArea.getText() != null){				
-				try {
-					oa.authorization(textArea.getText());
-					JOptionPane.showMessageDialog(null,"Sended", "Output", JOptionPane.PLAIN_MESSAGE);
-					textArea.setText("");
-				} catch (TwitterException e1) {
-					JOptionPane.showMessageDialog(null,"This status is already set", "Output", JOptionPane.PLAIN_MESSAGE);
-				}
+		public void actionPerformed(ActionEvent e){
+		try{		
+			if(statusArea.getText() != null){	
+					UserStatus uus = new UserStatus();	
+					uus.update(statusArea.getText());   
+					JOptionPane.showMessageDialog(null,"Sended", null , JOptionPane.PLAIN_MESSAGE);
+					statusArea.setText(null);
+				} 								
+			}				
+			catch (TwitterException e1) {
+			JOptionPane.showMessageDialog(null,"This status is already set", null, JOptionPane.PLAIN_MESSAGE);
+			
 			}
-			
-			
 		}
-		
 	}
+		
+	
 	class UpdateButtonListener implements ActionListener{
-		public void actionPerformed(ActionEvent e) {
-			
+		public void actionPerformed(ActionEvent e) {				
+					try {
+						list = listCreation();
+						mainInterface();
+					} catch (TwitterException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}	
 			
 		}
 	}
