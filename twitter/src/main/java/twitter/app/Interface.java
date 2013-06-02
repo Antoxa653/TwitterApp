@@ -1,16 +1,20 @@
 package twitter.app;
 
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.Box;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.border.EmptyBorder;
+
 import twitter4j.TwitterException;
 
 public class Interface extends JFrame {
@@ -29,30 +33,38 @@ public class Interface extends JFrame {
 	
 	public void mainInterface() throws TwitterException{	
 		sendButton = new JButton("Send");
-		updateButton = new JButton("Update");	
-		Box box1 = Box.createHorizontalBox();
-		box1.add(sendButton);
-		box1.add(Box.createHorizontalStrut(100));
-		box1.add(updateButton);		
-		statusArea = new JTextArea(10, 20);
+		updateButton = new JButton("Update");
+		JPanel panel1 = new JPanel();
+		JPanel panel2 = new JPanel();
+		JPanel mainPanel = new JPanel();
+		//panel1.setLayout(new BorderLayout());
+		//panel2.setLayout(new BorderLayout());
+		sendButton.setPreferredSize(new Dimension(100,50));
+		updateButton.setPreferredSize(new Dimension(100,50));
+		panel1.add(sendButton);
+		sendButton.setLocation(100, 100);
+		statusArea = new JTextArea();
 		statusArea.setLineWrap(true);
-		statusArea.setWrapStyleWord(true);		
-		list = listCreation();
-		Box box2 = Box.createHorizontalBox();				
-		box2.add(statusArea);
-		box2.add(Box.createHorizontalStrut(10));
-		box2.add(list);		
-		Box mainBox =Box.createVerticalBox();
-		mainBox.setBorder(new EmptyBorder(12,12,12,12));
-		mainBox.add(box1);
-		mainBox.add(Box.createVerticalStrut(10));
-		mainBox.add(box2);
-		frame.setContentPane(mainBox);		
-		frame.pack();
+		statusArea.setWrapStyleWord(true);
+		panel1.add(statusArea);		
+		panel2.add(updateButton);		
+		list = listCreation();						
+		panel2.add(list);		
+		mainPanel.setLayout(new FlowLayout());
+		mainPanel.add(panel1);
+		mainPanel.add(panel2);
+		//mainBox.setBorder(new EmptyBorder(10,10,10,10));
+		//mainBox.add(box1);
+		//mainBox.add(Box.createVerticalStrut(10));
+		//mainBox.add(box2);
+		frame.setContentPane(mainPanel);		
 		frame.setResizable(false);		
 		sendButton.addActionListener(new ButtonEventListener());
 		updateButton.addActionListener(new UpdateButtonListener());
+		frame.pack();	
 		frame.setVisible(true);
+		frame.setResizable(false);
+	
 		
 	}
 	public JList<String> listCreation() throws TwitterException{
@@ -61,9 +73,6 @@ public class Interface extends JFrame {
 		return list;
 	}
 	public void updateList() throws TwitterException{				
-		//list = listCreation();
-		//list.setVisibleRowCount(20);
-		//list.setSize(200, 200);
 		mainInterface();						
 	}	
 	
