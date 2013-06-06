@@ -68,8 +68,8 @@ public class Interface extends JFrame {
 		
 	}
 	public JList<String> listCreation() throws TwitterException{
-		UserTimeLine utl =new UserTimeLine();	
-		list =new JList<String>(utl.getTimeLine());
+		TimeLineUpdater utl =new TimeLineUpdater();	
+		list =new JList<String>(utl.getUpdatedTimeLine());
 		return list;
 	}
 	public void updateList() throws TwitterException{				
