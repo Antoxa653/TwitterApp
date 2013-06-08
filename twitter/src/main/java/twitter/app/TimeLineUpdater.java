@@ -1,5 +1,6 @@
 package twitter.app;
 
+import java.util.Iterator;
 import java.util.List;
 import javax.swing.DefaultListModel;
 import twitter4j.Status;
@@ -17,16 +18,17 @@ public class TimeLineUpdater {
 
 	private void updateTimeLine() throws TwitterException{
 		List<Status> statusList = twitter.getHomeTimeline();
-		listModel = new DefaultListModel<String>();			
-		for(int latestTweets = 0;latestTweets < statusList.size();latestTweets++){
+		listModel = new DefaultListModel<String>();	
+		Iterator<Status> iterator = statusList.iterator();
+		while(iterator.hasNext()){
 			StringBuilder builder = new StringBuilder();			
-			builder.append(statusList.get(latestTweets).getUser().getName());			
-			builder.append(statusList.get(latestTweets).getText());			
+			builder.append(iterator.next().getUser().getName());
+			builder.append(iterator.next().getText());
 			listModel.addElement(builder.toString());								
 		}	
 		
 	}
-	
+		
 	public DefaultListModel<String> getUpdatedTimeLine() throws TwitterException{
 		updateTimeLine();
 		return listModel;
