@@ -1,96 +1,95 @@
 package twitter.app;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.LayoutManager;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import twitter4j.TwitterException;
 
-public class MainFrame extends JFrame {
-	private Toolkit kit;
-	private Dimension screenSize;
-	private int screenHeight;
-	private int screenWidth;	
-	private static JPanel mainPanel;
-	private static JPanel timeLinePanel;
-	private static JPanel optionsPanel;
-	private static JPanel buttonPanel;
-	private static JPanel friendsAndTweetPanel;
-	private static JButton tweetButton;
-	private static JButton friendListButton;
+public class MainFrame extends JFrame {		
 	
-	public MainFrame(){		
-		kit = Toolkit.getDefaultToolkit();
-		screenSize = kit.getScreenSize();
-		screenHeight = screenSize.height;
-		screenWidth = screenSize.width;
+	
+	public MainFrame() throws TwitterException{		
+		Toolkit kit = Toolkit.getDefaultToolkit();
+		Dimension screenSize = kit.getScreenSize();
+		int screenHeight = screenSize.height;
+		int screenWidth = screenSize.width;
 		setSize(screenWidth/2, screenHeight/2);
 		setLocationByPlatform(true);		
-		setTitle("GUI");
+		setTitle("GUI");		
+		setLayout(new GridBagLayout());
 		
-		mainPanel = new JPanel(new GridLayout());
-		mainPanel.setBackground(Color.RED);
-		timeLinePanel = new JPanel();
-		timeLinePanel.setBackground(Color.DARK_GRAY);
-		optionsPanel = new JPanel(new GridLayout(0,1));
-		optionsPanel.setBackground(Color.GRAY);
-		buttonPanel = new JPanel();
-		buttonPanel.setBackground(Color.GREEN);
-		friendsAndTweetPanel = new JPanel();
-		friendsAndTweetPanel.setBackground(Color.ORANGE);
-		setContentPane(mainPanel);
+		JPanel timeLinePanel = new JPanel();	
+		JPanel buttonPanel = new JPanel();				
+		timeLinePanel.setBackground(Color.GRAY);
+		
+		add(buttonPanel, new GBC(0,0,1,1,100,100).setFill(GBC.BOTH));
+		add(timeLinePanel, new GBC(0,1,2,2,100,100).setFill(GBC.BOTH));
 		
 		
-		mainPanel.add(optionsPanel);
-		mainPanel.add(timeLinePanel);
-		optionsPanel.add(buttonPanel);
-		optionsPanel.add(friendsAndTweetPanel);		
+		JButton tweetButton = new JButton("Tweet");
+		JButton updateButton = new JButton("Update");		
+		buttonPanel.add(tweetButton);
+		buttonPanel.add(updateButton);
 		
-		tweetButton = makeButton("Tweet", buttonPanel);		
-		friendListButton = makeButton("Friend List", buttonPanel);
+		JTabbedPane listPane = new JTabbedPane();
+		timeLinePanel.add(listPane);
 		
-		makeButton("+",timeLinePanel);
-		makeButton("-",timeLinePanel);
 		
-		makeTextArea(10, 20, " Tweet something", friendsAndTweetPanel);
+		listPane.addTab("title", new Tab().createTimeLine());		
 		
 	}
-	
-	JButton makeButton(String name, JPanel panel){
-		JButton button = new JButton(name);
-		Controler buttonControler = new Controler();
-		button.addActionListener(buttonControler);
-		panel.add(button);
-		return button;
-	}			
-	
-	void makeTextArea(int height, int widht ,String name, JPanel panel){
-		JTextArea textArea = new JTextArea(height,widht);
-		textArea.setText(name);
-		textArea.setLineWrap(true);		
-		panel.add(textArea);
+				
+}
+
+class GBC extends GridBagConstraints{
+	GBC(int gridx, int gridy, int gridwidth, int gridheight, int weightx, int weighty){
+		this.gridx = gridx;
+		this.gridy = gridy;
+		this.gridwidth = gridwidth;
+		this.gridheight = gridheight;
+		this.weightx = weightx;
+		this.weighty = weighty;		
 	}
 	
-	static JButton getTweetButton(){
-		return tweetButton;
+	public GBC setFill(int fill){
+		this.fill = fill;
+		return this;
 	}
-	static JPanel getTimeLinePanel(){
-		return timeLinePanel;
+	
+	public GBC setAnchor(int anchor){
+		this.anchor = anchor;
+		return this;
+	}
+	
+	public GBC setInsets(int top, int bottom, int left, int right){
+		this.insets = new Insets(top,bottom,left,right);
+		return this;
+	}
+	public GBC setIpad(int ipadx, int ipady){
+		this.ipadx = ipadx;
+		this.ipady = ipady;
+		return this;
 	}
 }
-	
 
+
+class Tab{		
+	public JScrollPane createTimeLine() throws TwitterException{
+		TimeLineUpdater updater = new TimeLineUpdater();				
+		JList<String> list = new JList<String>(updater.getUpdatedTimeLine());
+		JScrollPane pane = new JScrollPane(list);
+		return pane;
+	}
+}
 		
 		
 
