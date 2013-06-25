@@ -12,40 +12,35 @@ import javax.swing.JTextField;
 
 import twitter4j.TwitterException;
 
-public class OAuthFrame extends JFrame  {
-	private JPanel mainPanel;
-	private JTextField urlLabel;
+public class OAuthFrame extends JFrame  {	
 	private JTextField pinField;
-	private JButton authorization;
-	private final OAuth oa = new OAuth();
 	public OAuthFrame(){
+		final OAuth oa = new OAuth();
 		setSize(800, 200);
 		setLocationByPlatform(true);		
 		setTitle("OAuthFrame");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
 		
-		mainPanel = new JPanel();
+		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new FlowLayout());
 		add(mainPanel);		
 		
-		urlLabel = new JTextField();
-		
+		JTextField urlLabel = new JTextField();		
 		urlLabel.setText(oa.getOAuthAuthorizationURL());
 		urlLabel.setEditable(false);		
-		mainPanel.add(urlLabel);
-		
+		mainPanel.add(urlLabel);		
 		pinField = new JTextField("Enter Pin");
 		mainPanel.add(pinField);
-		authorization = new JButton("authorization");	
+		
+		JButton authorization = new JButton("authorization");	
 		mainPanel.add(authorization);
 		authorization.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {				
 				try {
-					oa.OAuthSetup(getPin().getText());
-					
+					oa.OAuthSetup(getPin().getText());					
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}				
 			}});

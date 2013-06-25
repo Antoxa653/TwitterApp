@@ -1,5 +1,6 @@
 package twitter.app;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import twitter4j.IDs;
@@ -9,22 +10,27 @@ import twitter4j.TwitterFactory;
 
 public class FriendList {
 	private Twitter twitter;
-	private List<Friend> friendList;
+	private List<Friend> friendList = new ArrayList<Friend>();
 	public FriendList(){
 		this.twitter = TwitterFactory.getSingleton();
 	}
 	
-	private void setFriendList() throws TwitterException {
-		long cursor = -1;
-		IDs friendsIDs = twitter.getFriendsIDs(cursor);		
-		do{		
-			for(long i : friendsIDs.getIDs()){
-					friendList.add(new Friend(i, twitter.showUser(i).getName()));
-					System.out.println(i + twitter.showUser(i).getName());
+	private void setFriendList(){
+		try{
+			long cursor = -1;		
+			IDs friendsIDs = twitter.getFriendsIDs(cursor);
+			do{						
+				for(long id : friendsIDs.getIDs()){																		
+					friendList.add(new Friend(id, twitter.showUser(id).getName()));					
+				}
 			}
-		}
-		while(friendsIDs.hasNext());	
+			while(friendsIDs.hasNext());
+			}
+			catch(TwitterException te){
+				te.printStackTrace();
+			}
 	}
+	
 	
 	public List<Friend> getFriendList() throws TwitterException{
 		setFriendList();
@@ -35,7 +41,7 @@ public class FriendList {
 class Friend{
 	private long id;
 	private String name;
-	public Friend(long id, String name){
+	Friend(long id, String name){
 		this.id = id;
 		this.name = name;
 	}

@@ -15,8 +15,13 @@ public class UserDirectMessage {
 		twitter = TwitterFactory.getSingleton();		
 	}
 	
-	public void sendDirectMessage(long ID, String text) throws TwitterException{		
-		DirectMessage massage = twitter.sendDirectMessage(ID, text);
+	public void sendDirectMessage(long ID, String text){		
+		try {
+			DirectMessage massage = twitter.sendDirectMessage(ID, text);
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private void listOfDirectMessages() throws TwitterException{

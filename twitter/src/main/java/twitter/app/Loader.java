@@ -10,17 +10,25 @@ import twitter4j.TwitterException;
 
 public class Loader {	
 	
-	public static void main(String[] args){	
+	public static void main(String[] args){			
 		EventQueue.invokeLater(new Runnable(){
-			public void run(){
+			public void run(){				
+				CheckAuthorizationProperties cap = new CheckAuthorizationProperties();
+				if(cap.check()==false){
 				OAuthFrame oaFrame = new OAuthFrame();
-				
-				
+				}
+				else{
+					try {
+						MainFrame mf = new MainFrame();
+					} catch (TwitterException e) {						
+						e.printStackTrace();
+					}
+				}			 
 				
 			}
 		});
-							
-
 	}
-
 }
+				
+				
+			
