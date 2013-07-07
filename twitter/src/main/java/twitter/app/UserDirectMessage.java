@@ -114,16 +114,8 @@ public class UserDirectMessage{
 					return 0;
 				return o1.getDate().getTime() < o2.getDate().getTime() ? -1 : 1;
 			}});
-		//testing
-		for(Conversation c : conv){
-			LOG.info(String.valueOf(c.isSent()));
-		}
-		 
 		return conv;
-		
-		
 	}
-	
 }
 
 class RecievedMessage{

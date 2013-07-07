@@ -43,11 +43,13 @@ class TwitterInit{
 	private UserDirectMessage udm;
 	private UserStatus us;
 	private Twitter twitter;
+	private TimeLine tlu;
 	TwitterInit(Twitter t){
 		this.twitter = t;
 		fl = new FriendList(twitter);
 		udm = new UserDirectMessage(twitter);
 		us = new UserStatus(twitter);
+		tlu = new TimeLine(twitter);
 	}
 
 	public FriendList getFl() {
@@ -72,6 +74,22 @@ class TwitterInit{
 
 	public void setUs(UserStatus us) {
 		this.us = us;
+	}
+
+	public Twitter getTwitter() {
+		return twitter;
+	}
+
+	public void setTwitter(Twitter twitter) {
+		this.twitter = twitter;
+	}
+
+	public TimeLine getTlu() {
+		return tlu;
+	}
+
+	public void setTlu(TimeLine tlu) {
+		this.tlu = tlu;
 	}
 }
 

@@ -18,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutionException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -57,12 +58,14 @@ public class MainFrame extends JFrame{
 	private FriendList fl;	
 	private UserDirectMessage udm;
 	private UserStatus us;	
+	private TimeLine tlu;
 	MainFrame(TwitterInit ti, Twitter twitter){		
 		this.twitterInit = ti;
 		this.twitter = twitter;
 		this.fl = ti.getFl();		
 		this.udm = ti.getUdm();
 		this.us = ti.getUs();
+		this.tlu = ti.getTlu();
 		Toolkit kit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = kit.getScreenSize();
 		screenHeight = screenSize.height;
@@ -471,11 +474,67 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void createTimeLinePanel(){		
-		TimeLineUpdater updater = new TimeLineUpdater(timeLinePanel, twitter);		
-		updater.execute();
+		timeLinePanel.setLayout(new BorderLayout());
+		JPanel container = new JPanel();
+		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);		
+		container.setLayout(layout);		
+			for(Tweets t : tlu.getTimeLineList()){			
+				JPanel panel = new JPanel();
+				BorderLayout panelLayout = new BorderLayout();
+				panel.setBackground(Color.GRAY);				
+				panel.setLayout(panelLayout);
+				panel.setBorder(BorderFactory.createEtchedBorder());	
+				
+				final JTextArea textArea = new JTextArea();
+				DefaultCaret caret = (DefaultCaret) textArea.getCaret();
+				caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+				textArea.append(t.getName()+"\n"+t.getText());
+				textArea.setEditable(false);
+				textArea.setWrapStyleWord(true);
+				textArea.setLineWrap(true);
+				
+				textArea.addMouseListener(new MouseListener(){
+					public void mouseClicked(MouseEvent arg0) {
+						timeLinePanel.removeAll();					
+						internalPanel(textArea.getText());
+						timeLinePanel.repaint();
+						timeLinePanel.revalidate();
+					
+					}
+
+					public void mouseEntered(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					public void mouseExited(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					public void mousePressed(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}
+
+					public void mouseReleased(MouseEvent arg0) {
+						// TODO Auto-generated method stub
+						
+					}});
+				
+				
+							
+				panel.add(textArea, BorderLayout.CENTER);			
+				container.add(panel);			
+			}
+			
+		JScrollPane timeLineScrollPane = new JScrollPane(container);
+		timeLineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);		
+		timeLinePanel.add(BorderLayout.CENTER, timeLineScrollPane);
+				
 	}
 	
-	public void internalPanel(){		
+	public void internalPanel(String text){		
 		timeLinePanel.setLayout(new BorderLayout());
 		JPanel panel = new JPanel();
 		GroupLayout layout = new GroupLayout(panel);
@@ -483,22 +542,22 @@ public class MainFrame extends JFrame{
 		panel.setBackground(Color.WHITE);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		JButton backButton = new JButton("back");
-		JButton button = new JButton("button");
-		JTextArea textArea = new JTextArea("SomeText");			
+		JButton backButton = new JButton("back");		
+		JTextArea textArea = new JTextArea(text);			
 		textArea.setEditable(false);
+		textArea.setWrapStyleWord(true);
+		textArea.setLineWrap(true);
 		textArea.setBorder(BorderFactory.createEtchedBorder());
 		
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(backButton)
 						.addComponent(textArea)
-						.addComponent(button)));
+						));
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addComponent(backButton)
-				.addComponent(textArea)
-				.addComponent(button));
+				.addComponent(textArea));
 		
 		timeLinePanel.add(BorderLayout.CENTER, panel);
 		
