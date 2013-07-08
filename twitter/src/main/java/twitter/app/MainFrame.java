@@ -38,6 +38,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
@@ -45,7 +46,7 @@ import javax.swing.text.DefaultCaret;
 import twitter4j.Twitter;
 import twitter4j.internal.logging.Logger;
 
-public class MainFrame extends JFrame{	
+public class MainFrame extends JFrame{
 	
 	private int screenWidth;
 	private int screenHeight;
@@ -58,14 +59,15 @@ public class MainFrame extends JFrame{
 	private FriendList fl;	
 	private UserDirectMessage udm;
 	private UserStatus us;	
-	private TimeLine tlu;
+	private TimeLine tl;
+	private String currentName;
 	MainFrame(TwitterInit ti, Twitter twitter){		
 		this.twitterInit = ti;
 		this.twitter = twitter;
 		this.fl = ti.getFl();		
 		this.udm = ti.getUdm();
 		this.us = ti.getUs();
-		this.tlu = ti.getTlu();
+		this.tl = ti.getTlu();
 		Toolkit kit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = kit.getScreenSize();
 		screenHeight = screenSize.height;
@@ -85,10 +87,20 @@ public class MainFrame extends JFrame{
 		buttonPanel.setBorder(BorderFactory.createEtchedBorder());
 		panelTwo.setBorder(BorderFactory.createEtchedBorder());
 		timeLinePanel.setBorder(BorderFactory.createEtchedBorder());
-		
+		timeLinePanel.setName("null");
 		createButtonPanel();
-		createEmptyPanel();
-		createTimeLinePanel();	
+		createEmptyPanel();		
+		
+		Timer t = new Timer(true);
+		t.schedule(new TimerTask(){
+			@Override
+			public void run() {
+				LOG.info("Time Line Updating...");				
+				AutoUpdate au = new AutoUpdate();
+				au.execute();				
+			}}, 0, 180000);
+	
+		
 		
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
@@ -111,9 +123,12 @@ public class MainFrame extends JFrame{
 				.addComponent(timeLinePanel)));
 	}
 
-	public void createButtonPanel(){
+	public void createButtonPanel(){		
+		buttonPanel.setName("buttonPanel");
+		LOG.info(buttonPanel.getName());
 		GroupLayout layout = new GroupLayout(buttonPanel);
 		buttonPanel.setLayout(layout);
+		
 		layout.setAutoCreateContainerGaps(true);
 		layout.setAutoCreateGaps(true);
 		
@@ -125,14 +140,16 @@ public class MainFrame extends JFrame{
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addComponent(tweet)
 				.addComponent(friendList)
-				.addComponent(directMessages)								
+				.addComponent(directMessages)
+				
 				);
 		
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 						.addComponent(tweet)
 						.addComponent(friendList)
-						.addComponent(directMessages))
+						.addComponent(directMessages)
+						)
 				);
 	
 		
@@ -152,8 +169,8 @@ public class MainFrame extends JFrame{
 		/*
 		update.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				TimeLineUpdater updater = new TimeLineUpdater(timeLinePanel);		
-				updater.execute();
+						
+				tlu.execute();
 				update.setEnabled(false);
 				Timer t = new Timer();
 				t.schedule(new TimerTask(){
@@ -168,15 +185,17 @@ public class MainFrame extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				panelTwo.removeAll();
-				getDirectMessages();
+				createConversationsListPanel();
 				
 			}
 			
 		});
 	}
 	
-	public void createEmptyPanel(){
-		panelTwo.setLayout(new BorderLayout());
+	public void createEmptyPanel(){		
+		panelTwo.setName("emptyPanel");
+		LOG.info(panelTwo.getName());
+		panelTwo.setLayout(new BorderLayout());		
 		final ImageIcon icon = new ImageIcon("F:\\git\\TwitterApp\\twitter\\images.jpg");		
 		JLabel label = new JLabel();
 		label.setIcon(icon);
@@ -185,6 +204,8 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void createTweetPanel(){
+		panelTwo.setName("tweetPanel");
+		LOG.info(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);		
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
@@ -230,12 +251,13 @@ public class MainFrame extends JFrame{
 				);
 	}
 	
-	public void sentDirectMessage(final String name){
+	public void createDirectMessageToPanel(final String name){
+		panelTwo.setName("DirectMessageTo");
+		LOG.info(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);		
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		
 		final JTextArea textArea = new JTextArea();
 		JScrollPane scrollPane = new JScrollPane(textArea);			
 		textArea.setLineWrap(true);
@@ -278,6 +300,8 @@ public class MainFrame extends JFrame{
 	}
 	
 	public void createFriendPanel(){		
+		panelTwo.setName("listOfFriends");
+		LOG.info(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
@@ -296,7 +320,7 @@ public class MainFrame extends JFrame{
 		JButton directMassage = new JButton("Direct Massege");
 		JButton deleteFriend = new JButton("Dell Friend");
 		JButton addFriend = new JButton("Add Friend");
-		JLabel lable = new JLabel("Find new friends");
+		JLabel lable = new JLabel("Enter friend name:");
 		final JTextField textField = new JTextField(1);
 		textField.setMaximumSize(new Dimension(120,10));
 		
@@ -328,7 +352,7 @@ public class MainFrame extends JFrame{
 		directMassage.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				panelTwo.removeAll();
-				sentDirectMessage(list.getSelectedValue());
+				createDirectMessageToPanel(list.getSelectedValue());
 				
 			}
 		});
@@ -350,11 +374,13 @@ public class MainFrame extends JFrame{
 		});
 	}
 	
-	public void getDirectMessages(){
+	public void createConversationsListPanel(){
+		panelTwo.setName("conversationsList");
+		LOG.info(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		panelTwo.setLayout(layout);
+		panelTwo.setLayout(layout);	
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
 		for(String s : udm.conversationsList()){
 			dlm.addElement(s);
@@ -372,7 +398,7 @@ public class MainFrame extends JFrame{
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
 				panelTwo.removeAll();
-				internalConversation(nameList.getSelectedValue());
+				createInternalConversationPanel(nameList.getSelectedValue());
 				
 			}
 
@@ -402,7 +428,11 @@ public class MainFrame extends JFrame{
 		
 	}
 	
-	public void internalConversation(String name){
+	public String createInternalConversationPanel(String n){
+		String name = n;
+		setCurrentName(name);
+		panelTwo.setName("internalConversation");
+		LOG.info(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		layout.setAutoCreateContainerGaps(true);
 		layout.setAutoCreateGaps(true);
@@ -411,7 +441,7 @@ public class MainFrame extends JFrame{
 		JPanel container = new JPanel();
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
-		LinkedList<Conversation> conv = udm.getConversationMessages(name);		
+		LinkedList<Conversation> conv = udm.setConversationMessages(name);		
 		for(Conversation c : conv){			
 			JPanel panel = new JPanel();
 			panel.setBorder(BorderFactory.createEtchedBorder());
@@ -457,7 +487,7 @@ public class MainFrame extends JFrame{
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				panelTwo.removeAll();
-				getDirectMessages();
+				createConversationsListPanel();
 				
 			}
 			
@@ -471,14 +501,17 @@ public class MainFrame extends JFrame{
 				.addComponent(backButton)
 				.addComponent(scrollPane)
 				);
+		return name;
 	}
 	
-	public void createTimeLinePanel(){		
+	public void createHomeTimeLinePanel(){		
+		timeLinePanel.setName("homeTimeLine");
+		LOG.info(timeLinePanel.getName());
 		timeLinePanel.setLayout(new BorderLayout());
 		JPanel container = new JPanel();
 		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);		
 		container.setLayout(layout);		
-			for(Tweets t : tlu.getTimeLineList()){			
+			for(Tweets t : tl.getTimeLineList()){			
 				JPanel panel = new JPanel();
 				BorderLayout panelLayout = new BorderLayout();
 				panel.setBackground(Color.GRAY);				
@@ -496,7 +529,7 @@ public class MainFrame extends JFrame{
 				textArea.addMouseListener(new MouseListener(){
 					public void mouseClicked(MouseEvent arg0) {
 						timeLinePanel.removeAll();					
-						internalPanel(textArea.getText());
+						createInternaHomeTimeLinelPanel(textArea.getText());
 						timeLinePanel.repaint();
 						timeLinePanel.revalidate();
 					
@@ -531,15 +564,15 @@ public class MainFrame extends JFrame{
 		JScrollPane timeLineScrollPane = new JScrollPane(container);
 		timeLineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);		
 		timeLinePanel.add(BorderLayout.CENTER, timeLineScrollPane);
-				
+							
 	}
 	
-	public void internalPanel(String text){		
-		timeLinePanel.setLayout(new BorderLayout());
-		JPanel panel = new JPanel();
-		GroupLayout layout = new GroupLayout(panel);
-		panel.setLayout(layout);
-		panel.setBackground(Color.WHITE);
+	public void createInternaHomeTimeLinelPanel(String text){		
+		timeLinePanel.setName("internalHomeTimeLine");
+		LOG.info(timeLinePanel.getName());
+		GroupLayout layout = new GroupLayout(timeLinePanel);
+		timeLinePanel.setLayout(layout);
+		timeLinePanel.setBackground(Color.WHITE);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 		JButton backButton = new JButton("back");		
@@ -559,19 +592,21 @@ public class MainFrame extends JFrame{
 				.addComponent(backButton)
 				.addComponent(textArea));
 		
-		timeLinePanel.add(BorderLayout.CENTER, panel);
+		
 		
 		backButton.addActionListener(new ActionListener(){
 
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				timeLinePanel.removeAll();				
-				createTimeLinePanel();
+				createHomeTimeLinePanel();
 				timeLinePanel.repaint();
 				timeLinePanel.revalidate();
 			}
 			
 		});
+		
+	
 	}
 			
 	public JPanel createPreferredSizePanel(Color color, Dimension dimension) {
@@ -581,4 +616,46 @@ public class MainFrame extends JFrame{
 		return panel;		
 	}
 	
+	
+	
+	class AutoUpdate extends SwingWorker<Object,Object>{
+
+		@Override
+		protected Object doInBackground() throws Exception {			
+			tl.setTimeLineList();
+			LOG.info("Time Line has been updated");
+			udm.setSent();
+			udm.setRecieved();
+			return null;
+		}
+		@Override
+		protected void done(){
+			if(timeLinePanel.getName().equals("null")|timeLinePanel.getName().equals("homeTimeLine")){
+				timeLinePanel.removeAll();
+				createHomeTimeLinePanel();
+				timeLinePanel.repaint();
+				timeLinePanel.revalidate();
+			}
+			if(panelTwo.getName().equals("conversationsList")){
+				panelTwo.removeAll();
+				createConversationsListPanel();
+				panelTwo.repaint();
+				panelTwo.revalidate();
+			}
+			if(panelTwo.getName().equals("internalConversation")){
+				panelTwo.removeAll();	
+				createInternalConversationPanel(getCurrentName());
+				panelTwo.repaint();
+				panelTwo.revalidate();
+			}
+		}
+	}
+
+	public String getCurrentName() {
+		return currentName;
+	}
+
+	public void setCurrentName(String currentName) {
+		this.currentName = currentName;
+	}
 }

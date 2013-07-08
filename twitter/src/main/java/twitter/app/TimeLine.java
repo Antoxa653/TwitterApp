@@ -37,8 +37,9 @@ public class TimeLine{
 		setTimeLineList();
 	}
 	
-	private void setTimeLineList(){		
+	public void setTimeLineList(){		
 		try {
+			timeLineList.clear();
 			List<Status> statusList = twitter.getHomeTimeline();
 			for(Status status: statusList){			 				
 				timeLineList.add(new Tweets(status.getId(),status.getUser().getName(),status.getText()));	

@@ -23,10 +23,9 @@ public class UserDirectMessage{
 	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
 	private LinkedList<SentMessage> sent = new LinkedList<SentMessage>();
 	public static final Logger LOG = Logger.getLogger(UserDirectMessage.class);
+	private LinkedList<Conversation> conv = new LinkedList<Conversation>();	
 	UserDirectMessage(Twitter t){
-		this.twitter = t;
-		setRecieved();
-		setSent();
+		this.twitter = t;	
 	}
 	
 	public boolean sentDirectMessageTo(String name, String text){
@@ -44,6 +43,7 @@ public class UserDirectMessage{
 	
 	public LinkedList<RecievedMessage> setRecieved(){		
 		try {
+			recieved.clear();
 			ResponseList<DirectMessage> recievedMessages = twitter.getDirectMessages();
 			for(DirectMessage m : recievedMessages ){
 				recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));				
@@ -59,6 +59,7 @@ public class UserDirectMessage{
 	
 	public LinkedList<SentMessage> setSent(){
 		try{
+			sent.clear();
 			ResponseList<DirectMessage> sentMessages = twitter.getSentDirectMessages();
 			for(DirectMessage m : sentMessages ){
 				sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));				
@@ -91,8 +92,8 @@ public class UserDirectMessage{
 		return list;		
 	}
 	
-	public LinkedList<Conversation> getConversationMessages(String name){
-		LinkedList<Conversation> conv = new LinkedList<Conversation>();		
+	public LinkedList<Conversation> setConversationMessages(String name){		
+		conv.clear();
 		for(RecievedMessage rm : recieved){
 			if(rm.getSenderName().equals(name)){
 				conv.add(new Conversation(rm.getDate(), rm.getText(), false));
