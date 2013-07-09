@@ -44,7 +44,8 @@ public class FriendList {
 			IDs friendsIDs = twitter.getFriendsIDs(cursor);
 			do{						
 				for(long id : friendsIDs.getIDs()){																		
-					friendList.add(new Friend(id, twitter.showUser(id).getName()));
+					friendList.add(new Friend(id, twitter.showUser(id).getName(), twitter.showUser(id).getScreenName()));
+					LOG.info(twitter.showUser(id).getName()+" "+twitter.showUser(id).getScreenName());
 				}
 			}
 			while(friendsIDs.hasNext());
@@ -58,14 +59,16 @@ public class FriendList {
 		return friendList;		
 	}
 	
-	public void deleteFriend(String name) {
+	public void deleteFriend(String selectedValue) {
 		try {
+			String name = selectedValue.substring(0, selectedValue.indexOf("@")).trim();			
 			Iterator<Friend> it = friendList.iterator();
 			do{
 				Friend element = it.next();
-				if(element.getName() == name){
+				if(element.getName().equals(name)){
 					twitter.destroyFriendship(element.getID());
 					friendList.remove(element);
+					break;
 				}
 			}
 			while(it.hasNext());
@@ -83,14 +86,16 @@ public class FriendList {
 		
 	}
 	
-	public void addFriend(String name) throws TwitterException{		
-		try {
-			twitter.createFriendship(name);
-			long id = twitter.showUser(name).getId(); 	
-			friendList.add(new Friend(id, name));
+	public void addFriend(String user) throws TwitterException{		
+		try {			
+			String screenName = user.substring(0, user.length());
+			twitter.createFriendship(screenName);			
+			long id = twitter.showUser(screenName).getId();	
+			String name = twitter.showUser(screenName).getName();
+			friendList.add(new Friend(id, name, screenName));
 			PrintWriter pw = null;
 			pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
-			pw.println(String.valueOf(id)+" "+name);
+			pw.println(id+" "+name+"@"+screenName);
 			pw.close();
 		} 	
 		catch (FileNotFoundException e) {
@@ -104,7 +109,7 @@ public class FriendList {
          try {
 			pw = new PrintWriter(new FileOutputStream("FriendList.txt"));
 			for(Friend f : friendList){
-	        	 pw.println(f.getID()+" "+f.getName());
+	        	 pw.println(f.getID()+" "+f.getName()+"@"+f.getScreenName());
 	         }        
 	         pw.close();
 		} catch (FileNotFoundException e) {
@@ -119,9 +124,10 @@ public class FriendList {
 		String line;
 		while((line = br.readLine()) != null){
 			line.trim();
-			long id =Long.parseLong(line.substring(0, line.indexOf(" ")));
-			String name = line.substring(line.indexOf(" "), line.length());
-			friendList.add(new Friend(id, name));
+			long id = Long.parseLong(line.substring(0, line.indexOf(" ")));
+			String name = line.substring(line.indexOf(" "), line.indexOf("@")).trim();
+			String screenName = line.substring(line.indexOf("@")+1, line.length());
+			friendList.add(new Friend(id, name, screenName));
 		}
 		LOG.info("Friend list read correctly");
 		br.close();
@@ -138,9 +144,11 @@ public class FriendList {
 class Friend{
 	private long id;
 	private String name;
-	Friend(long id, String name){
+	private String screenName;
+	Friend(long id, String name, String screenName){
 		this.id = id;
-		this.name = name.trim();
+		this.name = name.trim();		
+		this.screenName = screenName.trim();
 	}
 	public long getID(){
 		return id;
@@ -153,6 +161,12 @@ class Friend{
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getScreenName() {
+		return screenName;
+	}
+	public void setScreenName(String screenName) {
+		this.screenName = screenName;
 	}
 }
 

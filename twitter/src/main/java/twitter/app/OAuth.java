@@ -13,8 +13,8 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 public class OAuth{
-	private String consumerKey = "qYTN6Qa7Ml3dIEesbBeQ";
-	private String consumerSecret = "K3bzZh8ZiuWyxzt7nGmBIMzjYXOVxeTiymhtkgqlkcs";
+	private String consumerKey = "QrLV7P1izPRAP5YwktX0g";
+	private String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
 	private String access;
 	private String accessTokenSecret;
 	private RequestToken requestToken;
@@ -34,8 +34,8 @@ public class OAuth{
 			LOG.warn("failed to receive a request token");
 			e.printStackTrace();			
 		}
-		LOG.info(requestToken.getAuthenticationURL());		
-		return requestToken.getAuthenticationURL();
+		LOG.info(requestToken.getAuthorizationURL());		
+		return requestToken.getAuthorizationURL();
 	}
 	
 	public boolean OAuthSetup(String pin){
@@ -48,7 +48,7 @@ public class OAuth{
         	  LOG.warn("no PIN code entered");
         	  complit = false;
           	}
-			access = accessToken.getToken();
+			access = accessToken.getToken();			
 			accessTokenSecret = accessToken.getTokenSecret();
 			print(consumerKey, consumerSecret, access, accessTokenSecret);
       	

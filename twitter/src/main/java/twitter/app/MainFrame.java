@@ -303,7 +303,7 @@ public class MainFrame extends JFrame{
 		LinkedHashSet<Friend> friendList = fl.getFriendList();
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
 		for(Friend f : friendList){
-			dlm.addElement(f.getName().trim());
+			dlm.addElement(f.getName()+" "+"@"+f.getScreenName());
 		}
 		final JList<String> list = new JList<String>(dlm);
 		
@@ -313,12 +313,11 @@ public class MainFrame extends JFrame{
 		JButton directMassage = new JButton("Direct Massege");
 		JButton deleteFriend = new JButton("Dell Friend");
 		JButton addFriend = new JButton("Add Friend");
-		JLabel lable = new JLabel("Enter friend name:");
+		JLabel lable = new JLabel("Enter friend twitter accaunt @:");
 		final JLabel errorLabel = new JLabel();
 		errorLabel.setVisible(false);
 		final JTextField textField = new JTextField(1);
 		textField.setMaximumSize(new Dimension(120,10));
-		
 		
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
@@ -369,7 +368,7 @@ public class MainFrame extends JFrame{
 		addFriend.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 				try {
-					fl.addFriend(textField.getText());
+					fl.addFriend(textField.getText().trim());
 					panelTwo.removeAll();
 					createFriendPanel();
 					errorLabel.setText("Friend is added!");
