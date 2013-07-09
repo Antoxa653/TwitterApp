@@ -69,7 +69,7 @@ public class FriendList {
 				}
 			}
 			while(it.hasNext());
-			File file =new File("F:\\git\\TwitterApp\\twitter\\FriendList.txt");
+			File file =new File("FriendList.txt");
 			file.delete();
 			createFriendListFile();
 		} 
@@ -83,18 +83,16 @@ public class FriendList {
 		
 	}
 	
-	public void addFriend(String name){		
+	public void addFriend(String name) throws TwitterException{		
 		try {
 			twitter.createFriendship(name);
 			long id = twitter.showUser(name).getId(); 	
 			friendList.add(new Friend(id, name));
 			PrintWriter pw = null;
-			pw = new PrintWriter(new FileOutputStream("F:\\git\\TwitterApp\\twitter\\FriendList.txt", true));
+			pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
 			pw.println(String.valueOf(id)+" "+name);
 			pw.close();
-		} catch (TwitterException e) {			
-			e.printStackTrace();
-		}		
+		} 	
 		catch (FileNotFoundException e) {
 			LOG.warn("FriendList file don't found");
 		}
@@ -117,7 +115,7 @@ public class FriendList {
 	public void readFriendListFile(){
 		friendList = new LinkedHashSet<Friend>();
 		try{
-		BufferedReader br = new BufferedReader(new FileReader("F:\\git\\TwitterApp\\twitter\\FriendList.txt"));
+		BufferedReader br = new BufferedReader(new FileReader("FriendList.txt"));
 		String line;
 		while((line = br.readLine()) != null){
 			line.trim();

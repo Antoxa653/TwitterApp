@@ -44,6 +44,7 @@ import javax.swing.text.Caret;
 import javax.swing.text.DefaultCaret;
 
 import twitter4j.Twitter;
+import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class MainFrame extends JFrame{
@@ -76,7 +77,7 @@ public class MainFrame extends JFrame{
 		setMinimumSize(new Dimension(screenWidth/2, screenHeight/2));
 		setLocationRelativeTo(null);		
 		setTitle("Twitter Application");
-		setResizable(false);
+		setResizable(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setBackground(Color.WHITE);
 		
@@ -170,15 +171,7 @@ public class MainFrame extends JFrame{
 		update.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
 						
-				tlu.execute();
-				update.setEnabled(false);
-				Timer t = new Timer();
-				t.schedule(new TimerTask(){
-					@Override
-					public void run() {
-						update.setEnabled(true);						
-					}}, 60000);
-			}	
+				
 		});
 		*/
 		directMessages.addActionListener(new ActionListener(){
@@ -321,18 +314,25 @@ public class MainFrame extends JFrame{
 		JButton deleteFriend = new JButton("Dell Friend");
 		JButton addFriend = new JButton("Add Friend");
 		JLabel lable = new JLabel("Enter friend name:");
+		final JLabel errorLabel = new JLabel();
+		errorLabel.setVisible(false);
 		final JTextField textField = new JTextField(1);
 		textField.setMaximumSize(new Dimension(120,10));
 		
 		
 		layout.setHorizontalGroup(layout.createSequentialGroup()
-				.addComponent(scrollPane)					
-				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-							.addComponent(lable)
-							.addComponent(textField)
-							.addComponent(addFriend)
-							.addComponent(directMassage)
-							.addComponent(deleteFriend))				
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+						.addGroup(layout.createSequentialGroup()
+								.addComponent(scrollPane)					
+								.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+										.addComponent(lable)
+										.addComponent(textField)
+										.addComponent(addFriend)
+										.addComponent(directMassage)
+										.addComponent(deleteFriend)))
+					
+						.addComponent(errorLabel))
+								
 				);
 				
 				
@@ -346,7 +346,8 @@ public class MainFrame extends JFrame{
 								.addComponent(textField)
 								.addComponent(addFriend)
 								.addComponent(directMassage)
-								.addComponent(deleteFriend)))				
+								.addComponent(deleteFriend)))
+				.addComponent(errorLabel)				
 				);
 		
 		directMassage.addActionListener(new ActionListener(){
@@ -367,9 +368,18 @@ public class MainFrame extends JFrame{
 		
 		addFriend.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e) {
-				fl.addFriend(textField.getText());
-				panelTwo.removeAll();
-				createFriendPanel();
+				try {
+					fl.addFriend(textField.getText());
+					panelTwo.removeAll();
+					createFriendPanel();
+					errorLabel.setText("Friend is added!");
+					errorLabel.setVisible(true);
+				} catch (TwitterException e1) {
+					LOG.info("Sorry this page doesn't exist");
+					errorLabel.setText("Sorry this page doesn't exist");
+					errorLabel.setVisible(true);
+				}
+				
 			}
 		});
 	}
@@ -397,8 +407,10 @@ public class MainFrame extends JFrame{
 
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				panelTwo.removeAll();
-				createInternalConversationPanel(nameList.getSelectedValue());
+				if(arg0.getButton() == MouseEvent.BUTTON1){
+					panelTwo.removeAll();
+					createInternalConversationPanel(nameList.getSelectedValue());
+				}
 				
 			}
 
@@ -480,6 +492,7 @@ public class MainFrame extends JFrame{
 		
 		JScrollPane scrollPane = new JScrollPane(container);
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setBorder(BorderFactory.createEtchedBorder());
 		
 		JButton backButton = new JButton("Back");
 		backButton.addActionListener(new ActionListener(){
