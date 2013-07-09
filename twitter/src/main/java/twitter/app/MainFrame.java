@@ -300,7 +300,7 @@ public class MainFrame extends JFrame{
 		JButton send = new JButton("Send Direct Message");		
 		send.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {				
-				boolean sended = udm.sentDirectMessageTo(name, textArea.getText());
+				boolean sended = udm.sentDirectMessageTo(name.substring(name.indexOf("@")+1,name.length()), textArea.getText());
 				if(sended){
 					LOG.info("Direct Message sended");
 					sendStatus.setText("Message sended");					
