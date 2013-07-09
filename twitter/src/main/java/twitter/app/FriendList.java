@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -14,10 +15,14 @@ import java.util.LinkedList;
 
 import javax.swing.DefaultListModel;
 
+import org.omg.CORBA.LongSeqHelper;
+
 import twitter4j.IDs;
+import twitter4j.ResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+import twitter4j.User;
 import twitter4j.internal.logging.Logger;
 
 public class FriendList {
@@ -37,22 +42,41 @@ public class FriendList {
 		}
 		
 	}
-	
-	private void createFriendList(){
-		try{
-			long cursor = -1;		
-			IDs friendsIDs = twitter.getFriendsIDs(cursor);			
-			do{						
-				for(long id : friendsIDs.getIDs()){																		
-					friendList.add(new Friend(id, twitter.showUser(id).getName(), twitter.showUser(id).getScreenName()));
-					LOG.info(twitter.showUser(id).getName()+" "+twitter.showUser(id).getScreenName());
-				}
+	public void createFriendList(){		
+		try {				
+			long[] friendsID = twitter.getFriendsIDs(-1).getIDs();				
+			int start = 0;
+			int finish = 100;				
+			ArrayList<Long> IDS  = new ArrayList<Long>();
+			
+			boolean check = true;
+			while(check){
+				for(int i = start; i<finish;i++){
+					IDS.add(friendsID[i]);						
+					if(friendsID.length-1 == i){
+						check = false;
+						break;
+					}
+				}					
+				start = start+100;
+				finish = finish+100;
+				long[] ids = new long[IDS.size()];
+				int i =0;
+				for(Long l : IDS){
+					ids[i++] = (Long)l;
+				}		
+				
+				ResponseList<User> user = twitter.lookupUsers(ids);
+				IDS.clear();
+				for(User u : user){
+					friendList.add(new Friend(u.getId(), u.getName(), u.getScreenName()));
+				}					
 			}
-			while(friendsIDs.hasNext());
-			}
-			catch(TwitterException te){
-				te.printStackTrace();
-			}
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 	
 	public LinkedHashSet<Friend> getFriendList(){		
