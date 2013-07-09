@@ -41,7 +41,7 @@ public class FriendList {
 	private void createFriendList(){
 		try{
 			long cursor = -1;		
-			IDs friendsIDs = twitter.getFriendsIDs(cursor);
+			IDs friendsIDs = twitter.getFriendsIDs(cursor);			
 			do{						
 				for(long id : friendsIDs.getIDs()){																		
 					friendList.add(new Friend(id, twitter.showUser(id).getName(), twitter.showUser(id).getScreenName()));

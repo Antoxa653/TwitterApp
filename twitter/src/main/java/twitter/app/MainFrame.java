@@ -31,6 +31,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -61,6 +64,7 @@ public class MainFrame extends JFrame{
 	private UserDirectMessage udm;
 	private UserStatus us;	
 	private TimeLine tl;
+	private AutoUpdate au;
 	private String currentName;
 	MainFrame(TwitterInit ti, Twitter twitter){		
 		this.twitterInit = ti;
@@ -89,6 +93,8 @@ public class MainFrame extends JFrame{
 		panelTwo.setBorder(BorderFactory.createEtchedBorder());
 		timeLinePanel.setBorder(BorderFactory.createEtchedBorder());
 		timeLinePanel.setName("null");
+		
+		createMenuBar();
 		createButtonPanel();
 		createEmptyPanel();		
 		
@@ -97,7 +103,7 @@ public class MainFrame extends JFrame{
 			@Override
 			public void run() {
 				LOG.info("Time Line Updating...");				
-				AutoUpdate au = new AutoUpdate();
+				au = new AutoUpdate();
 				au.execute();				
 			}}, 0, 180000);
 	
@@ -122,6 +128,40 @@ public class MainFrame extends JFrame{
 						.addComponent(buttonPanel)
 						.addComponent(panelTwo))
 				.addComponent(timeLinePanel)));
+	}
+	
+	public void createMenuBar(){
+		JMenuBar menuBar = new JMenuBar();
+		JMenu menu = new JMenu("Menu");				
+		JMenuItem logoutItem = new JMenuItem("Logout");
+		JMenuItem exit = new JMenuItem("Exit");
+		menuBar.add(menu);
+		menu.add(logoutItem);
+		menu.add(exit);
+		setJMenuBar(menuBar);
+		
+		logoutItem.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				dispose();				
+				LogOut logout = new LogOut();
+				logout.doLogout();
+			}});
+		exit.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				dispose();
+				if(au.getState() == SwingWorker.StateValue.STARTED){
+					do{
+						
+					}
+					while(au.getState() == SwingWorker.StateValue.DONE);
+				}
+				System.exit(0);
+				
+			}});
 	}
 
 	public void createButtonPanel(){		
@@ -627,9 +667,7 @@ public class MainFrame extends JFrame{
 		panel.setPreferredSize(dimension);
 		return panel;		
 	}
-	
-	
-	
+			
 	class AutoUpdate extends SwingWorker<Object,Object>{
 
 		@Override
