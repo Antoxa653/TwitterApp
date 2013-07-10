@@ -25,7 +25,7 @@ public class UserDirectMessage{
 	public static final Logger LOG = Logger.getLogger(UserDirectMessage.class);
 	private LinkedList<Conversation> conv = new LinkedList<Conversation>();	
 	UserDirectMessage(Twitter t){
-		this.twitter = t;	
+		this.twitter = t;
 	}
 	
 	public boolean sentDirectMessageTo(String name, String text){

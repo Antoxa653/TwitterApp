@@ -3,26 +3,18 @@ package twitter.app;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutionException;
-
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.GroupLayout;
@@ -35,15 +27,13 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
-import javax.swing.border.BevelBorder;
-import javax.swing.text.Caret;
+import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultCaret;
 
 import twitter4j.Twitter;
@@ -58,8 +48,6 @@ public class MainFrame extends JFrame{
 	private JPanel panelTwo;
 	private JPanel timeLinePanel;	
 	public static final Logger LOG = Logger.getLogger(MainFrame.class);
-	private Twitter twitter;
-	private TwitterInit twitterInit;
 	private FriendList fl;	
 	private UserDirectMessage udm;
 	private UserStatus us;	
@@ -67,8 +55,6 @@ public class MainFrame extends JFrame{
 	private AutoUpdate au;
 	private String currentName;
 	MainFrame(TwitterInit ti, Twitter twitter){		
-		this.twitterInit = ti;
-		this.twitter = twitter;
 		this.fl = ti.getFl();		
 		this.udm = ti.getUdm();
 		this.us = ti.getUs();
@@ -247,7 +233,10 @@ public class MainFrame extends JFrame{
 		final JTextArea textArea = new JTextArea();
 		JScrollPane scrollPane = new JScrollPane(textArea);			
 		textArea.setLineWrap(true);
-		textArea.setWrapStyleWord(true);
+		textArea.setWrapStyleWord(true);	
+		AbstractDocument pDoc = (AbstractDocument)textArea.getDocument();
+		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
+		
 		final JLabel label = new JLabel();
 		label.setVisible(false);
 		JButton send = new JButton("Update your status!");
@@ -295,6 +284,8 @@ public class MainFrame extends JFrame{
 		JScrollPane scrollPane = new JScrollPane(textArea);			
 		textArea.setLineWrap(true);
 		textArea.setWrapStyleWord(true);
+		AbstractDocument pDoc = (AbstractDocument)textArea.getDocument();
+		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
 		final JLabel sendStatus = new JLabel();
 		sendStatus.setVisible(false);
 		JButton send = new JButton("Send Direct Message");		
