@@ -10,7 +10,7 @@ import twitter4j.TwitterFactory;
 public class Initialization extends SwingWorker<TwitterInit,Object>{
 	private ProgressBarFrame pbf;
 	private MainFrame mf;
-	private Twitter twitter;
+	private final Twitter twitter;
     public Initialization(ProgressBarFrame pbf, Twitter twitter) {
         this.pbf = pbf; 
         this.twitter = twitter;
@@ -27,10 +27,8 @@ public class Initialization extends SwingWorker<TwitterInit,Object>{
 			try {
 				mf = new MainFrame(get(), twitter);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-					e.printStackTrace();
-			} catch (ExecutionException e) {
-					// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ExecutionException e) {				
 				e.printStackTrace();
 			}
 			mf.setVisible(true);

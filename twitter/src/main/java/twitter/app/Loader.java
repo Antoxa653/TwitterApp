@@ -15,7 +15,7 @@ public class Loader {
 	public static final Logger LOG = Logger.getLogger(Loader.class);	
 	public static void main(String[] args){	
 		PropertiesExist prop = new PropertiesExist();
-		final Twitter twitter = new TwitterInstance().getTwitter();
+		final Twitter twitter = new TwitterInstance().getTwitter();		
 		boolean exist = prop.isPropertiesExist();
 		if(!exist){
 			EventQueue.invokeLater(new Runnable(){
@@ -25,7 +25,7 @@ public class Loader {
 				}
 			});
 		}
-		if(exist){			
+		if(exist){
 			EventQueue.invokeLater(new Runnable(){
 				public void run(){
 					ProgressBarFrame pbf = new ProgressBarFrame();					
@@ -35,6 +35,6 @@ public class Loader {
 				}
 			});
 			
-		}
+		}		
 	}
 }

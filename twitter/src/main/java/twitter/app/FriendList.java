@@ -40,7 +40,6 @@ public class FriendList {
 			createFriendListFile();
 			
 		}
-		
 	}
 	public void createFriendList(){		
 		try {				
@@ -142,19 +141,19 @@ public class FriendList {
          
      }
 	public void readFriendListFile(){
-		friendList = new LinkedHashSet<Friend>();
+		//friendList = new LinkedHashSet<Friend>();
 		try{
-		BufferedReader br = new BufferedReader(new FileReader("FriendList.txt"));
-		String line;
-		while((line = br.readLine()) != null){
-			line.trim();
-			long id = Long.parseLong(line.substring(0, line.indexOf(" ")));
-			String name = line.substring(line.indexOf(" "), line.indexOf("@")).trim();
-			String screenName = line.substring(line.indexOf("@")+1, line.length());
-			friendList.add(new Friend(id, name, screenName));
-		}
-		LOG.info("Friend list read correctly");
-		br.close();
+			BufferedReader br = new BufferedReader(new FileReader("FriendList.txt"));
+			String line;
+			while((line = br.readLine()) != null){
+				line.trim();
+				long id = Long.parseLong(line.substring(0, line.indexOf(" ")));
+				String name = line.substring(line.indexOf(" "), line.indexOf("@")).trim();
+				String screenName = line.substring(line.indexOf("@")+1, line.length());
+				friendList.add(new Friend(id, name, screenName));
+			}
+			LOG.info("Friend list read correctly");
+			br.close();
 		}
 		catch(FileNotFoundException e){
 			LOG.warn("FriendList file don't found");

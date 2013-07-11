@@ -54,11 +54,13 @@ public class MainFrame extends JFrame{
 	private TimeLine tl;
 	private AutoUpdate au;
 	private String currentName;
+	private Twitter twitter;
 	MainFrame(TwitterInit ti, Twitter twitter){		
 		this.fl = ti.getFl();		
 		this.udm = ti.getUdm();
 		this.us = ti.getUs();
 		this.tl = ti.getTlu();
+		this.twitter = twitter;
 		Toolkit kit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = kit.getScreenSize();
 		screenHeight = screenSize.height;
@@ -564,7 +566,7 @@ public class MainFrame extends JFrame{
 				final JTextArea textArea = new JTextArea();
 				DefaultCaret caret = (DefaultCaret) textArea.getCaret();
 				caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-				textArea.append(t.getName()+"\n"+t.getText());
+				textArea.append("@"+t.getName()+"\n"+t.getText());
 				textArea.setEditable(false);
 				textArea.setWrapStyleWord(true);
 				textArea.setLineWrap(true);
@@ -662,9 +664,9 @@ public class MainFrame extends JFrame{
 	class AutoUpdate extends SwingWorker<Object,Object>{
 
 		@Override
-		protected Object doInBackground() throws Exception {			
+		protected Object doInBackground() throws Exception {
 			tl.setTimeLineList();
-			LOG.info("Time Line has been updated");
+			LOG.info("Time Line has been updated");			
 			udm.setSent();
 			udm.setRecieved();
 			return null;

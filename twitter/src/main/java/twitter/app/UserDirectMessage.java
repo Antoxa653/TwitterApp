@@ -1,5 +1,14 @@
 package twitter.app;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -7,6 +16,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import javax.swing.JPanel;
 import javax.swing.SwingWorker;
@@ -23,53 +33,80 @@ public class UserDirectMessage{
 	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
 	private LinkedList<SentMessage> sent = new LinkedList<SentMessage>();
 	public static final Logger LOG = Logger.getLogger(UserDirectMessage.class);
-	private LinkedList<Conversation> conv = new LinkedList<Conversation>();	
+	private LinkedList<Conversation> conv = new LinkedList<Conversation>();
+	private RateLimitation rl;
 	UserDirectMessage(Twitter t){
 		this.twitter = t;
 	}
 	
 	public boolean sentDirectMessageTo(String name, String text){
-		boolean complit = true;
-		try {
-			DirectMessage message = twitter.sendDirectMessage(twitter.showUser(name).getId(), text);			
-		}
-		catch (TwitterException e) {
-			if(e.getStatusCode() == 403) LOG.warn("You cannot send messages to users who are not following you");
-			else e.printStackTrace();
-			complit = false;
-		}
+		boolean complit = true;	
+			try {
+				DirectMessage message = twitter.sendDirectMessage(twitter.showUser(name).getId(), text);			
+			}
+			catch (TwitterException e) {
+				if(e.getStatusCode() == 403) LOG.warn("You cannot send messages to users who are not following you");
+				else e.printStackTrace();
+				complit = false;
+			}
 		return complit;
 	}
 	
-	public LinkedList<RecievedMessage> setRecieved(){		
-		try {
-			recieved.clear();
-			ResponseList<DirectMessage> recievedMessages = twitter.getDirectMessages();
-			for(DirectMessage m : recievedMessages ){
-				recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));				
+	public LinkedList<RecievedMessage> setRecieved(){
+		rl = new RateLimitation(twitter);
+		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages");
+		if(rateLimit >= 2){
+			try {
+				recieved.clear();
+				ResponseList<DirectMessage> recievedMessages = twitter.getDirectMessages();
+				for(DirectMessage m : recievedMessages ){					
+					recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));	
+				}
+				LOG.info("Recieved Messages update");
 			}
-			LOG.info("Recieved Messages update");
+			catch (TwitterException e) {
+				LOG.warn("Twitter Exception"+e.getStatusCode());
+				e.printStackTrace();
+			}
 		}
-		catch (TwitterException e) {
-			LOG.warn("Twitter Exception"+e.getStatusCode());
-			e.printStackTrace();
+		if(rateLimit == 2){
+			LOG.info("RecievedMessages file created");
+			printRecieved();
 		}
+		if(rateLimit <= 1){
+			LOG.info("RecievedMessages file readeding...");
+			readRecieved();
+		}
+		
 		return recieved;
 	}		
 	
 	public LinkedList<SentMessage> setSent(){
-		try{
-			sent.clear();
-			ResponseList<DirectMessage> sentMessages = twitter.getSentDirectMessages();
-			for(DirectMessage m : sentMessages ){
-				sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));				
+		rl = new RateLimitation(twitter);
+		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages/sent");
+		if(rateLimit >=2){
+			try{
+				sent.clear();
+				ResponseList<DirectMessage> sentMessages = twitter.getSentDirectMessages();
+				for(DirectMessage m : sentMessages ){
+					sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));				
+				}
+				LOG.info("Sent Messages update");
 			}
-			LOG.info("Sent Messages update");
+			catch (TwitterException e) {
+				LOG.warn("Twitter Exception"+e.getStatusCode());
+				e.printStackTrace();
+			}
 		}
-		catch (TwitterException e) {
-			LOG.warn("Twitter Exception"+e.getStatusCode());
-			e.printStackTrace();
+		if(rateLimit == 2){
+			LOG.info("SentMessages file created");
+			printSent();
 		}
+		if(rateLimit <= 1){
+			LOG.info("SentMessages file reading...");
+			readSent();
+		}
+		
 		return sent;
 	}
 	
@@ -117,11 +154,102 @@ public class UserDirectMessage{
 			}});
 		return conv;
 	}
+	
+	public void printSent(){
+		PrintWriter pw = null;
+		try{
+			pw = new PrintWriter(new FileOutputStream("SentMessages.txt"));
+			for(SentMessage s : sent){
+				pw.println(s.getId() + "@" + s.getRecipientName() + "(text)" + s.getText() + "(Date)" + s.getDate());
+			}
+			pw.close();
+		}
+		catch(FileNotFoundException e){
+			LOG.warn("Can't create file");
+		}
+		
+	}
+	
+	public void readSent(){		
+		try{
+			sent.clear();
+			BufferedReader br = new BufferedReader(new FileReader("SentMessages.txt"));
+			String line;
+			while((line = br.readLine()) != null){
+				line.trim();
+				long id = Long.parseLong(line.substring(0, line.indexOf("@")));
+				String name = line.substring(line.indexOf("@")+1, line.indexOf("(text)"));
+				String text = line.substring(line.indexOf("(text)")+6, line.indexOf("(Date)"));
+				String dateString = line.substring(line.indexOf("(Date)")+6, line.length());				
+				DateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy", Locale.UK);
+				
+				Date convertedDate = format.parse(dateString);
+				sent.add(new SentMessage(id, name, text, convertedDate));
+			}
+			LOG.info("SentMessages read correctly");
+			br.close();
+		}
+		catch(FileNotFoundException e){
+			LOG.warn("SentMessages file don't found");
+		}
+		catch(IOException i){
+			LOG.warn("SentMessages file don't found");
+		}
+		catch(ParseException pe){
+			pe.printStackTrace();
+			LOG.warn("ParseException");
+		}
+	}
+	
+	public void printRecieved(){
+		PrintWriter pw = null;
+		try{
+			pw = new PrintWriter(new FileOutputStream("RecievedMessages.txt"));
+			for(RecievedMessage r : recieved){
+				pw.println(r.getId() + "@" + r.getSenderName()+ "(text)" + r.getText() + "(Date)" + r.getDate());
+			}
+			pw.close();
+		}
+		catch(FileNotFoundException e){
+			LOG.warn("Can't create file");
+		}
+		
+	}
+	
+	public void readRecieved(){		
+		try{
+			recieved.clear();
+			BufferedReader br = new BufferedReader(new FileReader("RecievedMessages.txt"));
+			String line;
+			while((line = br.readLine()) != null){
+				line.trim();
+				long id = Long.parseLong(line.substring(0, line.indexOf("@")));
+				String name = line.substring(line.indexOf("@")+1, line.indexOf("(text)"));
+				String text = line.substring(line.indexOf("(text)")+6, line.indexOf("(Date)"));
+				String dateString = line.substring(line.indexOf("(Date)")+6, line.length());
+				DateFormat format = new SimpleDateFormat("EEE MMM dd HH:mm:ss zzzz yyyy", Locale.UK);			
+				Date convertedDate = format.parse(dateString);
+				recieved.add(new RecievedMessage(id, name, text, convertedDate));
+			}
+			LOG.info("RecievedMessages read correctly");
+			br.close();
+		}
+		catch(FileNotFoundException e){
+			LOG.warn("RecievedMessages file don't found");
+		}
+		catch(IOException i){
+			LOG.warn("RecievedMessages file don't found");
+		}
+		catch(ParseException pe){
+			LOG.warn("ParseException");
+		}
+	}
+	
 }
 
 class RecievedMessage{
-	private String text;
 	private long id;
+	private String text;	
 	private String senderName;
 	private Date date;
 	public RecievedMessage(long id, String senderName, String text, Date date ){
@@ -146,8 +274,8 @@ class RecievedMessage{
 }
 
 class SentMessage{
-	private String text;
 	private long id;
+	private String text;	
 	private String recipientName;
 	private Date date;
 	public SentMessage(long id, String recipientName, String text, Date date ){
