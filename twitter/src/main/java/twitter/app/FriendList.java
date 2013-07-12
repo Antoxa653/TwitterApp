@@ -11,63 +11,56 @@ import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-
-import javax.swing.DefaultListModel;
-
-import org.omg.CORBA.LongSeqHelper;
-
-import twitter4j.IDs;
 import twitter4j.ResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
 import twitter4j.User;
 import twitter4j.internal.logging.Logger;
 
 public class FriendList {
+	public final static Logger LOG = Logger.getLogger(FriendList.class);
 	private Twitter twitter;		
 	private LinkedHashSet<Friend> friendList = new LinkedHashSet<Friend>();
-	public final static Logger LOG = Logger.getLogger(FriendList.class);
-	
-	public FriendList(Twitter twitter){
+
+	public FriendList(Twitter twitter) {
 		this.twitter = twitter;
 		FriendListFileExist file = new FriendListFileExist();
 		boolean exist = file.isFriendListFileExist();
-		if(exist)readFriendListFile();
-		if(!exist){
+		if (exist) {
+			readFriendListFile();
+		}
+		if (!exist) {
 			createFriendList();
 			createFriendListFile();
-			
+
 		}
 	}
-	public void createFriendList(){		
+	private void createFriendList() {
 		try {				
-			long[] friendsID = twitter.getFriendsIDs(-1).getIDs();				
+			long[] friendsId = twitter.getFriendsIDs(-1).getIDs();
 			int start = 0;
 			int finish = 100;				
-			ArrayList<Long> IDS  = new ArrayList<Long>();
-			
+			ArrayList<Long> tempIdsArrayList  = new ArrayList<Long>();
 			boolean check = true;
-			while(check){
-				for(int i = start; i<finish;i++){
-					IDS.add(friendsID[i]);						
-					if(friendsID.length-1 == i){
+			while (check) {
+				for (int i = start; i < finish; i++) {
+					tempIdsArrayList.add(friendsId[i]);						
+					if (friendsId.length - 1 == i) {
 						check = false;
 						break;
 					}
 				}					
-				start = start+100;
-				finish = finish+100;
-				long[] ids = new long[IDS.size()];
-				int i =0;
-				for(Long l : IDS){
-					ids[i++] = (Long)l;
+				start = start + 100;
+				finish = finish + 100;
+				long[] ids = new long[tempIdsArrayList.size()];
+				int i = 0;
+				for (Long l : tempIdsArrayList) {
+					ids[i++] = (Long) l;
 				}		
-				
+
 				ResponseList<User> user = twitter.lookupUsers(ids);
-				IDS.clear();
-				for(User u : user){
+				tempIdsArrayList.clear();
+				for (User u : user) {
 					friendList.add(new Friend(u.getId(), u.getName(), u.getScreenName()));
 				}					
 			}
@@ -75,41 +68,41 @@ public class FriendList {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 	}
-	
-	public LinkedHashSet<Friend> getFriendList(){		
+
+	public LinkedHashSet<Friend> getFriendList() {
 		return friendList;		
 	}
-	
+
 	public void deleteFriend(String selectedValue) {
 		try {
 			String name = selectedValue.substring(0, selectedValue.indexOf("@")).trim();			
 			Iterator<Friend> it = friendList.iterator();
-			do{
+			do {
 				Friend element = it.next();
-				if(element.getName().equals(name)){
-					twitter.destroyFriendship(element.getID());
+				if (element.getName().equals(name)) {
+					twitter.destroyFriendship(element.getId());
 					friendList.remove(element);
 					break;
 				}
 			}
 			while(it.hasNext());
-			File file =new File("FriendList.txt");
+			File file = new File("FriendList.txt");
 			file.delete();
 			createFriendListFile();
 		} 
 		catch (TwitterException e) {			
 			LOG.warn("Twitter exception");
 		}
-		catch(ConcurrentModificationException t){
+		catch (ConcurrentModificationException t) {
 			LOG.warn("ConcurrentModificationException occurs, but FriendListFile was create");
 			createFriendListFile();
 		}
-		
+
 	}
-	
-	public void addFriend(String user) throws TwitterException{		
+
+	public void addFriend(String user) throws TwitterException {
 		try {			
 			String screenName = user.substring(0, user.length());
 			twitter.createFriendship(screenName);			
@@ -118,65 +111,63 @@ public class FriendList {
 			friendList.add(new Friend(id, name, screenName));
 			PrintWriter pw = null;
 			pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
-			pw.println(id+" "+name+"@"+screenName);
+			pw.println(id + " " + name + "@" + screenName);
 			pw.close();
 		} 	
 		catch (FileNotFoundException e) {
 			LOG.warn("FriendList file don't found");
 		}
 	}
-	
-	public void createFriendListFile()
-    {
+
+	private void createFriendListFile() {
          PrintWriter pw = null;
          try {
 			pw = new PrintWriter(new FileOutputStream("FriendList.txt"));
-			for(Friend f : friendList){
-	        	 pw.println(f.getID()+" "+f.getName()+"@"+f.getScreenName());
+			for ( Friend f : friendList) {
+	        	 pw.println(f.getId() + " " + f.getName() + "@" + f.getScreenName());
 	         }        
 	         pw.close();
 		} catch (FileNotFoundException e) {
 			LOG.warn("Can't create file");
 		}
-         
-     }
-	public void readFriendListFile(){
-		//friendList = new LinkedHashSet<Friend>();
-		try{
+
+    }
+	private void readFriendListFile() {
+		try {
 			BufferedReader br = new BufferedReader(new FileReader("FriendList.txt"));
 			String line;
-			while((line = br.readLine()) != null){
+			while ((line = br.readLine()) != null) {
 				line.trim();
 				long id = Long.parseLong(line.substring(0, line.indexOf(" ")));
 				String name = line.substring(line.indexOf(" "), line.indexOf("@")).trim();
-				String screenName = line.substring(line.indexOf("@")+1, line.length());
+				String screenName = line.substring(line.indexOf("@") + 1, line.length());
 				friendList.add(new Friend(id, name, screenName));
 			}
 			LOG.info("Friend list read correctly");
 			br.close();
 		}
-		catch(FileNotFoundException e){
+		catch (FileNotFoundException e) {
 			LOG.warn("FriendList file don't found");
 		}
-		catch(IOException i){
+		catch (IOException i) {
 			LOG.warn("FriendList file don't found");
 		}
 	}
 }
 
-class Friend{
+class Friend {
 	private long id;
 	private String name;
 	private String screenName;
-	Friend(long id, String name, String screenName){
+	Friend(long id, String name, String screenName) {
 		this.id = id;
 		this.name = name.trim();		
 		this.screenName = screenName.trim();
 	}
-	public long getID(){
+	public long getId() {
 		return id;
 	}
-	public String getName(){
+	public String getName() {
 		return name;
 	}	
 	public void setId(long id) {

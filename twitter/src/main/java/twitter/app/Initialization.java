@@ -5,27 +5,26 @@ import java.util.concurrent.ExecutionException;
 import javax.swing.SwingWorker;
 
 import twitter4j.Twitter;
-import twitter4j.TwitterFactory;
 
-public class Initialization extends SwingWorker<TwitterInit,Object>{
+public class Initialization extends SwingWorker <TwitterInit, Object> {
+	private final Twitter twitter;
 	private ProgressBarFrame pbf;
 	private MainFrame mf;
-	private final Twitter twitter;
     public Initialization(ProgressBarFrame pbf, Twitter twitter) {
         this.pbf = pbf; 
         this.twitter = twitter;
     }
 	@Override
-	protected TwitterInit doInBackground(){
+	protected TwitterInit doInBackground() {
 		TwitterInit init = new TwitterInit(twitter);
 		return init;
-		
+
 	}
 	@Override
-	protected void done(){		
+	protected void done() {
 			pbf.dispose();
 			try {
-				mf = new MainFrame(get(), twitter);
+				mf = new MainFrame(get());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (ExecutionException e) {				
@@ -33,16 +32,16 @@ public class Initialization extends SwingWorker<TwitterInit,Object>{
 			}
 			mf.setVisible(true);
 	}
-	
+
 }
 
-class TwitterInit{
+class TwitterInit {
 	private FriendList fl;
 	private UserDirectMessage udm;
 	private UserStatus us;
-	private Twitter twitter;
 	private TimeLine tlu;
-	TwitterInit(Twitter t){
+	private Twitter twitter;
+	TwitterInit(Twitter t) {
 		this.twitter = t;
 		fl = new FriendList(twitter);
 		udm = new UserDirectMessage(twitter);
@@ -57,7 +56,7 @@ class TwitterInit{
 	public void setFl(FriendList fl) {
 		this.fl = fl;
 	}
-	
+
 	public UserDirectMessage getUdm() {
 		return udm;
 	}

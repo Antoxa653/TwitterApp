@@ -12,14 +12,14 @@ public class RateLimitation {
 	public static final Logger LOG = Logger.getLogger(RateLimitation.class);
 	private Twitter twitter;
 	private Map<String, RateLimitStatus> rateLimit;
-	RateLimitation(Twitter t){
+	RateLimitation(Twitter t) {
 		this.twitter = t;
 		setRateLimit();
 	}	
 	public Map<String, RateLimitStatus> getRateLimit() {
 		return rateLimit;
 	}
-	public void setRateLimit() {
+	private void setRateLimit() {
 		try {
 			rateLimit = twitter.getRateLimitStatus();
 		} catch (TwitterException e) {
@@ -27,11 +27,11 @@ public class RateLimitation {
 			e.printStackTrace();
 		}	
 	}
-	
-	public int checkLimitStatusForEndpoint(String str){
+
+	public int checkLimitStatusForEndpoint(String str) {
 		int limit = 180;
-		for(String endpoint: rateLimit.keySet()){
-			if(endpoint.equals(str)){
+		for (String endpoint: rateLimit.keySet()) {
+			if (endpoint.equals(str)) {
 				RateLimitStatus status = rateLimit.get(endpoint);
 				LOG.info("Endpoint: " + endpoint);
 				LOG.info("Remaining: " + status.getRemaining());
@@ -41,18 +41,15 @@ public class RateLimitation {
 		}
 		return limit;
 	}
-	
-	public void checkLimitStatusForEndpoint(){	
-		for(String endpoint: rateLimit.keySet()){			
+
+	public void checkLimitStatusForEndpoint() {	
+		for (String endpoint : rateLimit.keySet()) {			
 				RateLimitStatus status = rateLimit.get(endpoint);
 				LOG.info("Endpoint: " + endpoint);
 				LOG.info("Limit: " + status.getLimit());
 				LOG.info("Remaining: " + status.getRemaining());
 				LOG.info("ResetTimeInSeconds: " + status.getResetTimeInSeconds());
 				LOG.info("SecondsUntilReset: " + status.getSecondsUntilReset());
-			
-		}
+				}
 	}
-	
-	
 }
