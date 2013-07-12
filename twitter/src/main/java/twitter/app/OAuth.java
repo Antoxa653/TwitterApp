@@ -12,7 +12,8 @@ import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
-public class OAuth{
+public class OAuth {
+	public static final Logger LOG = Logger.getLogger(OAuth.class);
 	private String consumerKey = "QrLV7P1izPRAP5YwktX0g";
 	private String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
 	private String access;
@@ -20,13 +21,12 @@ public class OAuth{
 	private RequestToken requestToken;
 	private AccessToken accessToken = null;
 	private Twitter twitter;
-	public static final Logger LOG=Logger.getLogger(OAuth.class);
-	public OAuth(Twitter twitter){
+	public OAuth(Twitter twitter) {
 		this.twitter = twitter;
 		twitter.setOAuthConsumer(consumerKey, consumerSecret);
 	}
-	
-	public String getOAuthAuthorizationURL(){
+
+	public String getOAuthAuthorizationURL() {
 		try {			
 			requestToken = twitter.getOAuthRequestToken();
 		} 
@@ -37,68 +37,62 @@ public class OAuth{
 		LOG.info(requestToken.getAuthorizationURL());		
 		return requestToken.getAuthorizationURL();
 	}
-	
-	public boolean OAuthSetup(String pin){
+
+	public boolean OAuthSetup(String pin) {
 		boolean complit = true;
-		try{
-			if(pin.length() > 0){
+		try {
+			if (pin.length() > 0) {
             accessToken = twitter.getOAuthAccessToken(requestToken, pin);
           	}          
-          	else{
+          	else {
         	  LOG.warn("no PIN code entered");
         	  complit = false;
           	}
 			access = accessToken.getToken();			
 			accessTokenSecret = accessToken.getTokenSecret();
 			print(consumerKey, consumerSecret, access, accessTokenSecret);
-      	
+
 		}
 		catch (TwitterException te){
-			if(401 == te.getStatusCode()){
+			if (401 == te.getStatusCode()) {
 				LOG.warn("Unable to get the access token.");
 				complit = false;
 			}
-			else{
+			else {
 				te.printStackTrace();
 				complit = false;
 				LOG.info("Unhandled exception");
 			}	
 		}
-		catch(FileNotFoundException e){	
+		catch (FileNotFoundException e) {	
 			e.printStackTrace();
 			complit = false;
 			LOG.warn("Ошибка cоздания файла twitter4j.properties");
 		}		
       	return complit;
     }
-	
-	public boolean spellCheckPIN(String pin){
+
+	public boolean spellCheckPIN(String pin) {
 		boolean complit = true;
-		try{
+		try {
 		int num = Integer.parseInt(pin);
 		}
-		catch(NumberFormatException e){
+		catch (NumberFormatException e) {
 			LOG.warn("Bad number format");
 			complit = false;
 		}
 		return complit;
 	}
-	
+
 	public void print(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) throws FileNotFoundException
 	    {
 	         PrintWriter pw = null;
 	         pw = new PrintWriter(new FileOutputStream("twitter4j.properties"));
 	         pw.println("debug=false");        
-	         pw.println("oauth.consumerKey="+consumerKey);
-	         pw.println("oauth.consumerSecret="+consumerSecret);
-	         pw.println("oauth.accessToken="+accessToken);
-	         pw.println("oauth.accessTokenSecret="+accessTokenSecret);
+	         pw.println("oauth.consumerKey=" + consumerKey);
+	         pw.println("oauth.consumerSecret=" + consumerSecret);
+	         pw.println("oauth.accessToken=" + accessToken);
+	         pw.println("oauth.accessTokenSecret=" + accessTokenSecret);
 	         pw.close();
 	     }
-
-	
-    
-   
-    
- 
 }
