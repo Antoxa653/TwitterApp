@@ -42,7 +42,6 @@ import javax.swing.SwingWorker;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultCaret;
 
-import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
@@ -667,51 +666,50 @@ public class MainFrame extends JFrame {
 			}
 		}
 	}
-	
-	private class ShowUrl implements MouseListener {
+
+	private final class ShowUrl implements MouseListener {
 		private JTextArea textArea;
 		private ShowUrl(JTextArea ta) {
 			this.textArea = ta;
 		}
 
 		@Override
-		public void mouseClicked(MouseEvent me) {
+		public void mouseClicked(MouseEvent me) {			
 			int x = me.getX();
 			int y = me.getY();				
-			String regex = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regex1 = "(\\s{1})|(\\).)";
+			String text = textArea.getText();
+			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
+			String regexWord = "(\\s{1})|(\\).)";
 			System.out.println("X :" + x);
 			System.out.println("Y :" + y);
 			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);
-			String text = textArea.getText();
-			String[] array = text.split(regex1);
+			System.out.println("StartOffset :" + startOffset);			
+			String[] array = text.split(regexWord);
 			System.out.println(Arrays.toString(array));
-			int n = 0;
-			while (n < array.length) {
-				String temp;
-				int startIndex = text.indexOf(array[n]);
-				int endIndex = startIndex + array[n].length();
-				temp = text.substring(startIndex, endIndex);
-				System.out.println("startIndex = " + startIndex + ";" + "EndIndex = " + endIndex + ";" + "string :" + temp);
 
-				if (startOffset >= startIndex && startOffset <= endIndex) {
-					if (temp.matches(regex)) {						
+			for (String s : array) {
+				if (s.matches(regexUrl)) {
+					System.out.println(" string matched");					
+					int start = text.indexOf(s);
+					int finish = start + s.length();
+					if (start <= startOffset & startOffset <= finish) {
+						System.out.println(" startOffset target!!!");
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
 						 		try {
-						 			String urlString = array[n]; 
+						 			String urlString = s; 
 									URL url = new URL(urlString);
 									desktop.browse(url.toURI());
+									System.out.println("Open URL");
+									break;
 						 		} catch (IOException | URISyntaxException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 						 		}
-						 }
+						}
 					}
 				}
-				n++;
-			}				
+			}			
 		}
 
 
@@ -741,57 +739,68 @@ public class MainFrame extends JFrame {
 
 	}
 
-	private class ShowUrlFromTimeLine implements MouseListener  {
+	private final class ShowUrlFromTimeLine implements MouseListener  {
 		private JTextArea textArea;
 		private ShowUrlFromTimeLine(JTextArea ta) {
 			this.textArea = ta;
-			
+
 		}
 		@Override
 		public void mouseClicked(MouseEvent me) {
+			boolean goInto = true;
 			int x = me.getX();
 			int y = me.getY();				
-			String regex = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regex1 = "(\\s{1})|(\\).)";
+			String text = textArea.getText();
+			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
+			String regexWord = "(\\s{1})|(\\).)";
 			System.out.println("X :" + x);
 			System.out.println("Y :" + y);
 			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);
-			String text = textArea.getText();
-			String[] array = text.split(regex1);
+			System.out.println("StartOffset :" + startOffset);			
+			String[] array = text.split(regexWord);
 			System.out.println(Arrays.toString(array));
-			int n = 0;
-			while (n < array.length) {
-				String temp;
-				int startIndex = text.indexOf(array[n]);
-				int endIndex = startIndex + array[n].length();
-				temp = text.substring(startIndex, endIndex);
-				System.out.println("startIndex = " + startIndex + ";" + "EndIndex = " + endIndex + ";" + "string :" + temp);
 
-				if (temp.matches(regex)) {						
-					if (startIndex <= startOffset & startOffset <= endIndex) {
+			for (String s : array) {
+				if (s.matches(regexUrl)) {
+					System.out.println(" string matched");
+					goInto = false;
+					int start = text.indexOf(s);
+					int finish = start + s.length();
+					if (start <= startOffset & startOffset <= finish) {
+						System.out.println(" startOffset target!!!");
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
 						 		try {
-						 			String urlString = array[n]; 
+						 			String urlString = s; 
 									URL url = new URL(urlString);
 									desktop.browse(url.toURI());
+									System.out.println("Open URL");
+									break;
 						 		} catch (IOException | URISyntaxException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 						 		}
-						 }
+						}
 					}
-					if (startOffset < startIndex | endIndex < startOffset) {
+					else {
 						timeLinePanel.removeAll();					
 						createInternaHomeTimeLinelPanel(textArea.getText());
 						timeLinePanel.revalidate();
 						timeLinePanel.repaint();
+						System.out.println("goInto false - but im in");
 					}
+
 				}
-				n++;
+			}
+			if (goInto) {
+				timeLinePanel.removeAll();					
+				createInternaHomeTimeLinelPanel(textArea.getText());
+				timeLinePanel.revalidate();
+				timeLinePanel.repaint();
+				System.out.println("goInto true - and im in");
 			}
 		}
+		
 		@Override
 		public void mouseEntered(MouseEvent e) {
 			// TODO Auto-generated method stub
@@ -811,6 +820,21 @@ public class MainFrame extends JFrame {
 		public void mouseReleased(MouseEvent e) {
 			// TODO Auto-generated method stub
 			
+		}
+	}
+
+	class StartEnd {
+		private int start;
+		private int end;
+		StartEnd(int s, int e) {
+			this.start = s;
+			this.end = e;
+		}
+		public int getStart() {
+			return start;
+		}
+		public int getEnd() {
+			return end;
 		}
 	}
 }
