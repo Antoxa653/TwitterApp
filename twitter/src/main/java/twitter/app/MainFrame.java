@@ -2,14 +2,20 @@ package twitter.app;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Timer;
@@ -547,44 +553,19 @@ public class MainFrame extends JFrame {
 				panel.setBorder(BorderFactory.createEtchedBorder());	
 
 				final JTextArea textArea = new JTextArea();
+				JLabel label = new JLabel();
+				label.setText(t.getName());				
 				DefaultCaret caret = (DefaultCaret) textArea.getCaret();
-				caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-				textArea.append("@" + t.getName() + "\n" + t.getText());
+				caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);								
+				textArea.append(t.getText() + " ");
 				textArea.setEditable(false);
 				textArea.setWrapStyleWord(true);
-				textArea.setLineWrap(true);
+				textArea.setLineWrap(true);				
 
-				textArea.addMouseListener(new MouseListener() {
-					public void mouseClicked(MouseEvent arg0) {
-						timeLinePanel.removeAll();					
-						createInternaHomeTimeLinelPanel(textArea.getText());
-						timeLinePanel.repaint();
-						timeLinePanel.revalidate();
+				textArea.addMouseListener(new ShowUrlFromTimeLine(textArea)); 
 
-					}
-
-					public void mouseEntered(MouseEvent arg0) {
-						// TODO Auto-generated method stub
-
-					}
-
-					public void mouseExited(MouseEvent arg0) {
-						// TODO Auto-generated method stub
-
-					}
-
-					public void mousePressed(MouseEvent arg0) {
-						// TODO Auto-generated method stub
-
-					}
-
-					public void mouseReleased(MouseEvent arg0) {
-						// TODO Auto-generated method stub
-
-					} });
-
-
-				panel.add(textArea, BorderLayout.CENTER);			
+				panel.add(textArea, BorderLayout.CENTER);
+				panel.add(label, BorderLayout.NORTH);
 				container.add(panel);			
 			}
 
@@ -595,6 +576,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private void createInternaHomeTimeLinelPanel(String text) {
+		String tweetText = text;
 		timeLinePanel.setName("internalHomeTimeLine");
 		LOG.info(timeLinePanel.getName());
 		GroupLayout layout = new GroupLayout(timeLinePanel);
@@ -603,7 +585,8 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 		JButton backButton = new JButton("back");		
-		JTextArea textArea = new JTextArea(text);			
+		final JTextArea textArea = new JTextArea();
+		textArea.setText(tweetText);
 		textArea.setEditable(false);
 		textArea.setWrapStyleWord(true);
 		textArea.setLineWrap(true);
@@ -633,7 +616,7 @@ public class MainFrame extends JFrame {
 
 		});
 
-
+		textArea.addMouseListener(new ShowUrl(textArea));
 	}
 
 	private String getCurrentName() {
@@ -682,6 +665,152 @@ public class MainFrame extends JFrame {
 				panelTwo.repaint();
 				panelTwo.revalidate();
 			}
+		}
+	}
+	
+	private class ShowUrl implements MouseListener {
+		private JTextArea textArea;
+		private ShowUrl(JTextArea ta) {
+			this.textArea = ta;
+		}
+
+		@Override
+		public void mouseClicked(MouseEvent me) {
+			int x = me.getX();
+			int y = me.getY();				
+			String regex = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
+			String regex1 = "(\\s{1})|(\\).)";
+			System.out.println("X :" + x);
+			System.out.println("Y :" + y);
+			int startOffset = textArea.viewToModel(new Point(x, y));
+			System.out.println("StartOffset :" + startOffset);
+			String text = textArea.getText();
+			String[] array = text.split(regex1);
+			System.out.println(Arrays.toString(array));
+			int n = 0;
+			while (n < array.length) {
+				String temp;
+				int startIndex = text.indexOf(array[n]);
+				int endIndex = startIndex + array[n].length();
+				temp = text.substring(startIndex, endIndex);
+				System.out.println("startIndex = " + startIndex + ";" + "EndIndex = " + endIndex + ";" + "string :" + temp);
+
+				if (startOffset >= startIndex && startOffset <= endIndex) {
+					if (temp.matches(regex)) {						
+						Desktop desktop = Desktop.getDesktop();
+						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
+						 		try {
+						 			String urlString = array[n]; 
+									URL url = new URL(urlString);
+									desktop.browse(url.toURI());
+						 		} catch (IOException | URISyntaxException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+						 		}
+						 }
+					}
+				}
+				n++;
+			}				
+		}
+
+
+		@Override
+		public void mouseEntered(MouseEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseExited(MouseEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mousePressed(MouseEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent arg0) {
+			// TODO Auto-generated method stub
+			
+		}
+
+	}
+
+	private class ShowUrlFromTimeLine implements MouseListener  {
+		private JTextArea textArea;
+		private ShowUrlFromTimeLine(JTextArea ta) {
+			this.textArea = ta;
+			
+		}
+		@Override
+		public void mouseClicked(MouseEvent me) {
+			int x = me.getX();
+			int y = me.getY();				
+			String regex = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
+			String regex1 = "(\\s{1})|(\\).)";
+			System.out.println("X :" + x);
+			System.out.println("Y :" + y);
+			int startOffset = textArea.viewToModel(new Point(x, y));
+			System.out.println("StartOffset :" + startOffset);
+			String text = textArea.getText();
+			String[] array = text.split(regex1);
+			System.out.println(Arrays.toString(array));
+			int n = 0;
+			while (n < array.length) {
+				String temp;
+				int startIndex = text.indexOf(array[n]);
+				int endIndex = startIndex + array[n].length();
+				temp = text.substring(startIndex, endIndex);
+				System.out.println("startIndex = " + startIndex + ";" + "EndIndex = " + endIndex + ";" + "string :" + temp);
+
+				if (temp.matches(regex)) {						
+					if (startIndex <= startOffset & startOffset <= endIndex) {
+						Desktop desktop = Desktop.getDesktop();
+						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
+						 		try {
+						 			String urlString = array[n]; 
+									URL url = new URL(urlString);
+									desktop.browse(url.toURI());
+						 		} catch (IOException | URISyntaxException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+						 		}
+						 }
+					}
+					if (startOffset < startIndex | endIndex < startOffset) {
+						timeLinePanel.removeAll();					
+						createInternaHomeTimeLinelPanel(textArea.getText());
+						timeLinePanel.revalidate();
+						timeLinePanel.repaint();
+					}
+				}
+				n++;
+			}
+		}
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void mouseExited(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void mousePressed(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 }
