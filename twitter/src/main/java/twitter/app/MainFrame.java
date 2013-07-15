@@ -359,7 +359,7 @@ public class MainFrame extends JFrame {
 						.addComponent(errorLabel))
 				);
 
-		layout.linkSize(SwingConstants.HORIZONTAL, directMassage, deleteFriend, addFriend );		
+		layout.linkSize(SwingConstants.HORIZONTAL, directMassage, deleteFriend, addFriend);		
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -463,7 +463,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private String createInternalConversationPanel(String n) {
-		String name = n;
+		final String name = n;
 		setCurrentName(name);
 		panelTwo.setName("internalConversation");
 		LOG.info(panelTwo.getName());
@@ -516,6 +516,45 @@ public class MainFrame extends JFrame {
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setBorder(BorderFactory.createEtchedBorder());
 
+		JPanel messagePanel = new JPanel();		
+		BorderLayout panelLayout = new BorderLayout();
+		messagePanel.setLayout(panelLayout);	
+		messagePanel.setBorder(BorderFactory.createEtchedBorder());
+		
+		final JTextArea messageArea = new JTextArea(25, 1);
+		messageArea.setWrapStyleWord(true);
+		messageArea.setLineWrap(true);
+		messageArea.setEditable(true);		
+		AbstractDocument pDoc = (AbstractDocument) messageArea.getDocument();
+		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
+
+		JScrollPane messageAreaScrollPane = new JScrollPane(messageArea);
+		messageAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		messageAreaScrollPane.setBorder(BorderFactory.createEtchedBorder());
+		
+		messagePanel.add(messageAreaScrollPane);
+
+		final JLabel sendStatus = new JLabel();
+		sendStatus.setVisible(false);
+
+		JButton messageButton = new JButton("Send Message");
+		messageButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				boolean sended = udm.sentDirectMessageTo(name, messageArea.getText());
+				if (sended) {
+					LOG.info("Direct Message sended");
+					sendStatus.setText("Message sended");					
+					sendStatus.setVisible(true);
+				}
+				if (!sended) {
+					LOG.info("Direct Message not sended");
+					sendStatus.setText("Message not sended");
+					sendStatus.setVisible(true);
+				}
+			} });
+
 		JButton backButton = new JButton("Back");
 		backButton.addActionListener(new ActionListener() {
 
@@ -529,10 +568,16 @@ public class MainFrame extends JFrame {
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(backButton)
-						.addComponent(scrollPane)));
+						.addComponent(scrollPane)
+						.addComponent(messagePanel)
+						.addComponent(messageButton)
+						.addComponent(sendStatus)));
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addComponent(backButton)
 				.addComponent(scrollPane)
+				.addComponent(messagePanel)
+				.addComponent(messageButton)
+				.addComponent(sendStatus)
 				);
 		return name;
 	}
@@ -800,7 +845,7 @@ public class MainFrame extends JFrame {
 				System.out.println("goInto true - and im in");
 			}
 		}
-		
+
 		@Override
 		public void mouseEntered(MouseEvent e) {
 			// TODO Auto-generated method stub
