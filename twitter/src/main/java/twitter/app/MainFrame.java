@@ -49,7 +49,7 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class MainFrame extends JFrame {
-	public static final Logger LOG = Logger.getLogger(MainFrame.class);
+	private Logger LOG = Logger.getLogger(getClass());
 	private int screenWidth;
 	private int screenHeight;
 	private JPanel buttonPanel;
@@ -97,7 +97,7 @@ public class MainFrame extends JFrame {
 		t.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				LOG.info("Time Line Updating...");
+				LOG.debug("Time Line Updating...");
 				au = new AutoUpdate();
 				au.execute();
 			}
@@ -162,7 +162,7 @@ public class MainFrame extends JFrame {
 
 	private void createButtonPanel() {
 		buttonPanel.setName("buttonPanel");
-		LOG.info(buttonPanel.getName());
+		LOG.debug(buttonPanel.getName());
 		GroupLayout layout = new GroupLayout(buttonPanel);
 		buttonPanel.setLayout(layout);
 
@@ -215,7 +215,7 @@ public class MainFrame extends JFrame {
 		panelTwo.setName("emptyPanel");
 		LOG.debug(panelTwo.getName());
 		panelTwo.setLayout(new BorderLayout());
-		final ImageIcon icon = new ImageIcon("F:\\git\\TwitterApp\\twitter\\images.jpg");
+		final ImageIcon icon = new ImageIcon("images.jpg");
 		JLabel label = new JLabel();
 		label.setIcon(icon);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -469,11 +469,11 @@ public class MainFrame extends JFrame {
 		panelTwo.setName("internalConversation");
 		LOG.debug(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
+		panelTwo.setLayout(layout);
 		layout.setAutoCreateContainerGaps(true);
 		layout.setAutoCreateGaps(true);
-		panelTwo.setLayout(layout);
 
-		JPanel container = new JPanel();
+		JPanel container = new JPanel();		
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
 		LinkedList<Conversation> conv = udm.setConversationMessages(name);
@@ -486,54 +486,46 @@ public class MainFrame extends JFrame {
 			panel.setLayout(panelLayout);
 			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			String dateTime = dateFormat.format(c.getDate());
+			label.setText(dateTime);
+			textArea.setBorder(BorderFactory.createEtchedBorder());
+			textArea.setWrapStyleWord(true);
+			textArea.setLineWrap(true);
+			textArea.setEditable(false);
+			textArea.setText(c.getText());
+			panel.add(textArea, BorderLayout.WEST);
+			panel.add(label, BorderLayout.CENTER);
 			if (c.isSent()) {
-				label.setText(dateTime);
-				textArea.setBorder(BorderFactory.createEtchedBorder());
 				textArea.setBackground(Color.YELLOW);
-				textArea.setWrapStyleWord(true);
-				textArea.setLineWrap(true);
-				textArea.setEditable(false);
-				textArea.setText(c.getText());
-				panel.add(textArea, BorderLayout.WEST);
-				panel.add(label, BorderLayout.CENTER);
-
 			}
-			if (!c.isSent()) {
-				label.setText(dateTime);
-				textArea.setBorder(BorderFactory.createEtchedBorder());
-				textArea.setBackground(Color.LIGHT_GRAY);
-				textArea.setWrapStyleWord(true);
-				textArea.setLineWrap(true);
-				textArea.setEditable(false);
-				textArea.setText(c.getText());
-				panel.add(textArea, BorderLayout.WEST);
-				panel.add(label, BorderLayout.CENTER);
-
+			else {				
+				textArea.setBackground(Color.LIGHT_GRAY);				
 			}
 			container.add(panel);
 		}
 
-		JScrollPane scrollPane = new JScrollPane(container);
-		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setBorder(BorderFactory.createEtchedBorder());
+		JScrollPane containerScrollPane = new JScrollPane(container);
+		containerScrollPane.setPreferredSize(new Dimension(screenWidth / 4, 2 * screenHeight / 16));
+		containerScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		containerScrollPane.setBorder(BorderFactory.createEtchedBorder());
 
-		JPanel messagePanel = new JPanel();
-		BorderLayout panelLayout = new BorderLayout();
-		messagePanel.setLayout(panelLayout);
+		JPanel messagePanel = new JPanel();		
+		BorderLayout messagePanelLayout = new BorderLayout();
+		messagePanel.setLayout(messagePanelLayout);
 		messagePanel.setBorder(BorderFactory.createEtchedBorder());
 
-		final JTextArea messageArea = new JTextArea(25, 1);
+		JScrollPane messagePanelScrollPane = new JScrollPane(messagePanel);
+		messagePanelScrollPane.setPreferredSize(new Dimension(screenWidth / 4, 1 * screenHeight / 16));
+		messagePanelScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		messagePanelScrollPane.setBorder(BorderFactory.createEtchedBorder());
+		
+		final JTextArea messageArea = new JTextArea();		
 		messageArea.setWrapStyleWord(true);
 		messageArea.setLineWrap(true);
 		messageArea.setEditable(true);
 		AbstractDocument pDoc = (AbstractDocument) messageArea.getDocument();
 		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
-
-		JScrollPane messageAreaScrollPane = new JScrollPane(messageArea);
-		messageAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		messageAreaScrollPane.setBorder(BorderFactory.createEtchedBorder());
-
-		messagePanel.add(messageAreaScrollPane);
+		
+		messagePanel.add(BorderLayout.CENTER, messageArea);
 
 		final JLabel sendStatus = new JLabel();
 		sendStatus.setVisible(false);
@@ -570,14 +562,14 @@ public class MainFrame extends JFrame {
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(backButton)
-						.addComponent(scrollPane)
-						.addComponent(messagePanel)
+						.addComponent(containerScrollPane)
+						.addComponent(messagePanelScrollPane)
 						.addComponent(messageButton)
 						.addComponent(sendStatus)));
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addComponent(backButton)
-				.addComponent(scrollPane)
-				.addComponent(messagePanel)
+				.addComponent(containerScrollPane)
+				.addComponent(messagePanelScrollPane)
 				.addComponent(messageButton)
 				.addComponent(sendStatus)
 				);
@@ -678,7 +670,7 @@ public class MainFrame extends JFrame {
 		return panel;
 	}
 
-	class AutoUpdate extends SwingWorker<Object, Object> {
+	private class AutoUpdate extends SwingWorker<Object, Object> {
 
 		@Override
 		protected Object doInBackground() throws Exception {
