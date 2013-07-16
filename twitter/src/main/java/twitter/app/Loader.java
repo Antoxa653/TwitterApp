@@ -5,10 +5,11 @@ import twitter4j.Twitter;
 import twitter4j.internal.logging.Logger;
 
 public class Loader {
-	public static final Logger LOG = Logger.getLogger(Loader.class);
+	private Logger LOG = Logger.getLogger(getClass());
+
 	public static void main(String[] args) {
-		PropertiesExist prop = new PropertiesExist();
 		final Twitter twitter = new TwitterInstance().getTwitter();
+		PropertiesExist prop = new PropertiesExist();
 		boolean exist = prop.isPropertiesExist();
 		if (!exist) {
 			EventQueue.invokeLater(new Runnable() {
@@ -18,7 +19,7 @@ public class Loader {
 				}
 			});
 		}
-		if (exist) {
+		else {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
 					ProgressBarFrame pbf = new ProgressBarFrame();

@@ -16,7 +16,7 @@ public class UserStatus {
 		try {
 			twitter.updateStatus(newStatus);
 		} catch (TwitterException e) {
-			LOG.warn("Twitter exception" + e.getStatusCode());
+			LOG.error("Twitter exception" + e.getStatusCode() + " " + e);
 			e.printStackTrace();
 			complit = false;
 		}

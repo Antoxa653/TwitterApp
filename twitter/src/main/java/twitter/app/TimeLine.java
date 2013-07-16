@@ -1,6 +1,5 @@
 package twitter.app;
 
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -17,14 +16,17 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class TimeLine {
-	public static final Logger LOG = Logger.getLogger(TimeLine.class);
-	private Twitter twitter;	
-	private LinkedList<Tweets> timeLineList;
+	private Logger LOG = Logger.getLogger(getClass());
+	private Twitter twitter;
+	private LinkedList<Tweets> timeLineList = new LinkedList<Tweets>();;
 	private RateLimitation rl;
+
 	public TimeLine(Twitter twitter) {
 		this.twitter = twitter;
-		timeLineList = new LinkedList<Tweets>();
+	}
 
+	public LinkedList<Tweets> getTimeLineList() {
+		return timeLineList;
 	}
 
 	public void setTimeLineList() {
@@ -35,29 +37,20 @@ public class TimeLine {
 				timeLineList.clear();
 				List<Status> statusList = twitter.getHomeTimeline();
 				for (Status status : statusList) {
-					timeLineList.add(new Tweets(status.getId(), status.getUser().getScreenName(), status.getText()));	
-				}		
-			} 
-			catch (TwitterException e) {			
-				LOG.warn("Error while updating timeline" + e.getStatusCode());
-				//e.printStackTrace();
+					timeLineList.add(new Tweets(status.getId(), status.getUser().getScreenName(), status.getText()));
+				}
+			} catch (TwitterException e) {
+				LOG.error("Error while updating timeline" + e.getStatusCode() + " " + e);
 			}
 		}
 		if (rateLimit == 2) {
-			LOG.info("TimeLine writed in the TimeLine.txt file");
+			LOG.debug("TimeLine writed in the TimeLine.txt file");
 			printTimeLineList();
-
 		}
 		if (rateLimit <= 1) {
-			LOG.info("TimeLineReaded from the file TimeLine.txt");
+			LOG.debug("TimeLine readed from the file TimeLine.txt");
 			readTimeLineList();
-
 		}
-
-	}
-
-	public LinkedList<Tweets> getTimeLineList() {
-		return timeLineList;
 	}
 
 	public void printTimeLineList() {
@@ -67,17 +60,20 @@ public class TimeLine {
 			for (Tweets t : timeLineList) {
 				pw.println(t.getId() + "@" + t.getName() + "(text)" + t.getText());
 			}
-			pw.close();
-		}
-		catch (FileNotFoundException e) {
-			LOG.warn("Can't create file");
+		} catch (FileNotFoundException e) {
+			LOG.error("Can't create TimeLine.txt file");
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
 		}
 	}
 
 	public void readTimeLineList() {
+		timeLineList.clear();
+		BufferedReader br = null;
 		try {
-			timeLineList.clear();
-			BufferedReader br = new BufferedReader(new FileReader("TimeLine.txt"));
+			br = new BufferedReader(new FileReader("TimeLine.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -86,36 +82,44 @@ public class TimeLine {
 				String text = line.substring(line.indexOf("(text)") + 6, line.length());
 				timeLineList.add(new Tweets(id, name, text));
 			}
-			LOG.info("TimeLineList read correctly");
-			br.close();
-		}
-		catch (FileNotFoundException e) {
-			LOG.warn("FriendList file don't found");
-		}
-		catch (IOException i) {
-			LOG.warn("FriendList file don't found");
-		}
-	}
-} 
+			LOG.debug("TimeLineList read correctly");
+		} catch (FileNotFoundException e) {
+			LOG.error("TimeLine.txt file not found", e);
+		} catch (IOException i) {
+			LOG.error("FriendList file don't found", i);
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					LOG.error("Error while trying to close bufferedreader strram", e);
 
-class Tweets {
-	private long id;
-	private String name;
-	private String text;
-	Tweets(long id, String name, String text) {
-		this.id = id;
-		this.name = name;
-		this.text = text;
-	}
-	public String getText() {
-		return text;
+				}
+			}
+		}
 	}
 
-	public String getName() {
-		return name;
-	}
+	protected class Tweets {
+		private long id;
+		private String name;
+		private String text;
 
-	public long getId() {
-		return id;
-	}		
+		Tweets(long id, String name, String text) {
+			this.id = id;
+			this.name = name;
+			this.text = text;
+		}
+
+		public String getText() {
+			return text;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public long getId() {
+			return id;
+		}
+	}
 }

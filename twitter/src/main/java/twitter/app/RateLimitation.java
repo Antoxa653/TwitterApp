@@ -12,44 +12,47 @@ public class RateLimitation {
 	public static final Logger LOG = Logger.getLogger(RateLimitation.class);
 	private Twitter twitter;
 	private Map<String, RateLimitStatus> rateLimit;
+
 	RateLimitation(Twitter t) {
 		this.twitter = t;
 		setRateLimit();
-	}	
+	}
+
 	public Map<String, RateLimitStatus> getRateLimit() {
 		return rateLimit;
 	}
+
 	private void setRateLimit() {
 		try {
 			rateLimit = twitter.getRateLimitStatus();
 		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
+			LOG.error("Error while trying to get rate limits: " + e.getStatusCode() + " " + e);
+
+		}
 	}
 
 	public int checkLimitStatusForEndpoint(String str) {
 		int limit = 180;
-		for (String endpoint: rateLimit.keySet()) {
+		for (String endpoint : rateLimit.keySet()) {
 			if (endpoint.equals(str)) {
 				RateLimitStatus status = rateLimit.get(endpoint);
-				LOG.info("Endpoint: " + endpoint);
-				LOG.info("Remaining: " + status.getRemaining());
-				limit =  status.getRemaining();
+				LOG.debug("Endpoint: " + endpoint);
+				LOG.debug("Remaining: " + status.getRemaining());
+				limit = status.getRemaining();
 				break;
 			}
 		}
 		return limit;
 	}
 
-	public void checkLimitStatusForEndpoint() {	
-		for (String endpoint : rateLimit.keySet()) {			
-				RateLimitStatus status = rateLimit.get(endpoint);
-				LOG.info("Endpoint: " + endpoint);
-				LOG.info("Limit: " + status.getLimit());
-				LOG.info("Remaining: " + status.getRemaining());
-				LOG.info("ResetTimeInSeconds: " + status.getResetTimeInSeconds());
-				LOG.info("SecondsUntilReset: " + status.getSecondsUntilReset());
-				}
+	public void checkLimitStatusForEndpoint() {
+		for (String endpoint : rateLimit.keySet()) {
+			RateLimitStatus status = rateLimit.get(endpoint);
+			LOG.debug("Endpoint: " + endpoint);
+			LOG.debug("Limit: " + status.getLimit());
+			LOG.debug("Remaining: " + status.getRemaining());
+			LOG.debug("ResetTimeInSeconds: " + status.getResetTimeInSeconds());
+			LOG.debug("SecondsUntilReset: " + status.getSecondsUntilReset());
+		}
 	}
 }

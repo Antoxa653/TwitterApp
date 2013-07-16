@@ -42,6 +42,9 @@ import javax.swing.SwingWorker;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultCaret;
 
+import twitter.app.FriendList.Friend;
+import twitter.app.TimeLine.Tweets;
+import twitter.app.UserDirectMessage.Conversation;
 import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
@@ -49,17 +52,18 @@ public class MainFrame extends JFrame {
 	public static final Logger LOG = Logger.getLogger(MainFrame.class);
 	private int screenWidth;
 	private int screenHeight;
-	private JPanel buttonPanel;		
+	private JPanel buttonPanel;
 	private JPanel panelTwo;
 	private JPanel timeLinePanel;
-	private FriendList fl;	
+	private FriendList fl;
 	private UserDirectMessage udm;
-	private UserStatus us;	
+	private UserStatus us;
 	private TimeLine tl;
 	private AutoUpdate au;
-	private String currentName;	
-	MainFrame(TwitterInit ti) {
-		this.fl = ti.getFl();		
+	private String currentName;
+
+	MainFrame(TwitterInitialization ti) {
+		this.fl = ti.getFl();
 		this.udm = ti.getUdm();
 		this.us = ti.getUs();
 		this.tl = ti.getTlu();
@@ -70,14 +74,14 @@ public class MainFrame extends JFrame {
 		screenWidth = screenSize.width;
 		setSize(screenWidth / 2, screenHeight / 2);
 		setMinimumSize(new Dimension(screenWidth / 2, screenHeight / 2));
-		setLocationRelativeTo(null);		
+		setLocationRelativeTo(null);
 		setTitle("Twitter Application");
 		setResizable(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setBackground(Color.WHITE);
 
-		buttonPanel = createPreferredSizePanel(Color.WHITE,  new Dimension(screenWidth / 4, screenHeight / 16));		
-		panelTwo = createPreferredSizePanel(Color.WHITE,  new Dimension(screenWidth / 4, 7 * screenHeight / 16));		
+		buttonPanel = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, screenHeight / 16));
+		panelTwo = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, 7 * screenHeight / 16));
 		timeLinePanel = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, screenHeight / 2));
 
 		buttonPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -93,11 +97,11 @@ public class MainFrame extends JFrame {
 		t.schedule(new TimerTask() {
 			@Override
 			public void run() {
-				LOG.info("Time Line Updating...");				
+				LOG.info("Time Line Updating...");
 				au = new AutoUpdate();
-				au.execute();				
-			} }, 0, 180000);
-
+				au.execute();
+			}
+		}, 0, 180000);
 
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
@@ -108,21 +112,21 @@ public class MainFrame extends JFrame {
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 						.addComponent(buttonPanel)
 						.addComponent(panelTwo))
-				.addComponent(timeLinePanel));				
+				.addComponent(timeLinePanel));
 
 		layout.linkSize(SwingConstants.HORIZONTAL, buttonPanel, panelTwo);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 						.addGroup(layout.createSequentialGroup()
-						.addComponent(buttonPanel)
-						.addComponent(panelTwo))
-				.addComponent(timeLinePanel)));
+								.addComponent(buttonPanel)
+								.addComponent(panelTwo))
+						.addComponent(timeLinePanel)));
 	}
 
 	private void createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
-		JMenu menu = new JMenu("Menu");				
+		JMenu menu = new JMenu("Menu");
 		JMenuItem logoutItem = new JMenuItem("Logout");
 		JMenuItem exit = new JMenuItem("Exit");
 		menuBar.add(menu);
@@ -134,10 +138,11 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				dispose();				
+				dispose();
 				LogOut logout = new LogOut();
 				logout.doLogout();
-			} });
+			}
+		});
 		exit.addActionListener(new ActionListener() {
 
 			@Override
@@ -147,11 +152,12 @@ public class MainFrame extends JFrame {
 					do {
 
 					}
-					while(au.getState() == SwingWorker.StateValue.DONE);
+					while (au.getState() == SwingWorker.StateValue.DONE);
 				}
 				System.exit(0);
 
-			} });
+			}
+		});
 	}
 
 	private void createButtonPanel() {
@@ -164,7 +170,7 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateGaps(true);
 
 		JButton tweet = new JButton("Tweet");
-		JButton friendList = new JButton("Friend List");		
+		JButton friendList = new JButton("Friend List");
 		JButton directMessages = new JButton("DirectMessages");
 
 		layout.setHorizontalGroup(layout.createSequentialGroup()
@@ -179,15 +185,14 @@ public class MainFrame extends JFrame {
 						.addComponent(tweet)
 						.addComponent(friendList)
 						.addComponent(directMessages)
-						)
+				)
 				);
-
 
 		tweet.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				panelTwo.removeAll();
 				createTweetPanel();
-			}	
+			}
 		});
 
 		friendList.addActionListener(new ActionListener() {
@@ -208,9 +213,9 @@ public class MainFrame extends JFrame {
 
 	private void createEmptyPanel() {
 		panelTwo.setName("emptyPanel");
-		LOG.info(panelTwo.getName());
-		panelTwo.setLayout(new BorderLayout());		
-		final ImageIcon icon = new ImageIcon("F:\\git\\TwitterApp\\twitter\\images.jpg");		
+		LOG.debug(panelTwo.getName());
+		panelTwo.setLayout(new BorderLayout());
+		final ImageIcon icon = new ImageIcon("F:\\git\\TwitterApp\\twitter\\images.jpg");
 		JLabel label = new JLabel();
 		label.setIcon(icon);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -219,16 +224,16 @@ public class MainFrame extends JFrame {
 
 	private void createTweetPanel() {
 		panelTwo.setName("tweetPanel");
-		LOG.info(panelTwo.getName());
-		GroupLayout layout = new GroupLayout(panelTwo);		
+		LOG.debug(panelTwo.getName());
+		GroupLayout layout = new GroupLayout(panelTwo);
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 
 		final JTextArea textArea = new JTextArea();
-		JScrollPane scrollPane = new JScrollPane(textArea);			
+		JScrollPane scrollPane = new JScrollPane(textArea);
 		textArea.setLineWrap(true);
-		textArea.setWrapStyleWord(true);	
+		textArea.setWrapStyleWord(true);
 		AbstractDocument pDoc = (AbstractDocument) textArea.getDocument();
 		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
 
@@ -236,15 +241,15 @@ public class MainFrame extends JFrame {
 		label.setVisible(false);
 		JButton send = new JButton("Update your status!");
 		send.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {				
+			public void actionPerformed(ActionEvent arg0) {
 				boolean updated = us.update(textArea.getText());
 				if (updated) {
-					LOG.info("Twitter status update correctly");
+					LOG.debug("Twitter status update correctly");
 					label.setText("Status updated!!!");
 					label.setVisible(true);
 				}
 				if (!updated) {
-					LOG.info("Twitter status has not been updated ");
+					LOG.debug("Twitter status has not been updated ");
 					label.setText("An erros has occurred");
 					label.setVisible(true);
 				}
@@ -256,44 +261,45 @@ public class MainFrame extends JFrame {
 						.addComponent(scrollPane)
 						.addComponent(send)
 						.addComponent(label))
-						);
+				);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 						.addComponent(scrollPane))
-			    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-			    		.addComponent(send))
-			    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-			    		.addComponent(label))		
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(send))
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(label))
 				);
 	}
 
 	private void createDirectMessageToPanel(final String name) {
 		panelTwo.setName("DirectMessageTo");
-		LOG.info(panelTwo.getName());
-		GroupLayout layout = new GroupLayout(panelTwo);		
+		LOG.debug(panelTwo.getName());
+		GroupLayout layout = new GroupLayout(panelTwo);
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 		final JTextArea textArea = new JTextArea();
-		JScrollPane scrollPane = new JScrollPane(textArea);			
+		JScrollPane scrollPane = new JScrollPane(textArea);
 		textArea.setLineWrap(true);
 		textArea.setWrapStyleWord(true);
 		AbstractDocument pDoc = (AbstractDocument) textArea.getDocument();
 		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
 		final JLabel sendStatus = new JLabel();
 		sendStatus.setVisible(false);
-		JButton send = new JButton("Send Direct Message");		
+		JButton send = new JButton("Send Direct Message");
 		send.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {				
-				boolean sended = udm.sentDirectMessageTo(name.substring(name.indexOf("@") + 1, name.length()), textArea.getText());
+			public void actionPerformed(ActionEvent arg0) {
+				boolean sended = udm.sentDirectMessageTo(name.substring(name.indexOf("@") + 1, name.length()),
+						textArea.getText());
 				if (sended) {
-					LOG.info("Direct Message sended");
-					sendStatus.setText("Message sended");					
+					LOG.debug("Direct Message sended");
+					sendStatus.setText("Message sended");
 					sendStatus.setVisible(true);
 				}
 				if (!sended) {
-					LOG.info("Direct Message not sended");
+					LOG.debug("Direct Message not sended");
 					sendStatus.setText("Message not sended");
 					sendStatus.setVisible(true);
 				}
@@ -306,21 +312,21 @@ public class MainFrame extends JFrame {
 						.addComponent(scrollPane)
 						.addComponent(send)
 						.addComponent(sendStatus))
-						);
+				);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 						.addComponent(scrollPane))
-			    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-			    		.addComponent(send))
-			    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-			    		.addComponent(sendStatus))
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(send))
+				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(sendStatus))
 				);
 	}
 
 	private void createFriendPanel() {
 		panelTwo.setName("listOfFriends");
-		LOG.info(panelTwo.getName());
+		LOG.debug(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		panelTwo.setLayout(layout);
 		layout.setAutoCreateGaps(true);
@@ -333,8 +339,8 @@ public class MainFrame extends JFrame {
 		}
 		final JList<String> list = new JList<String>(dlm);
 
-		JScrollPane scrollPane = new JScrollPane(list);		
-		scrollPane.setBorder(BorderFactory.createEtchedBorder());		
+		JScrollPane scrollPane = new JScrollPane(list);
+		scrollPane.setBorder(BorderFactory.createEtchedBorder());
 
 		JButton directMassage = new JButton("Direct Massege");
 		JButton deleteFriend = new JButton("Dell Friend");
@@ -348,7 +354,7 @@ public class MainFrame extends JFrame {
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addGroup(layout.createSequentialGroup()
-								.addComponent(scrollPane)					
+								.addComponent(scrollPane)
 								.addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
 										.addComponent(lable)
 										.addComponent(textField)
@@ -359,7 +365,7 @@ public class MainFrame extends JFrame {
 						.addComponent(errorLabel))
 				);
 
-		layout.linkSize(SwingConstants.HORIZONTAL, directMassage, deleteFriend, addFriend);		
+		layout.linkSize(SwingConstants.HORIZONTAL, directMassage, deleteFriend, addFriend);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -370,7 +376,7 @@ public class MainFrame extends JFrame {
 								.addComponent(addFriend)
 								.addComponent(directMassage)
 								.addComponent(deleteFriend)))
-				.addComponent(errorLabel)				
+				.addComponent(errorLabel)
 				);
 
 		directMassage.addActionListener(new ActionListener() {
@@ -391,17 +397,11 @@ public class MainFrame extends JFrame {
 
 		addFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				try {
-					fl.addFriend(textField.getText().trim());
-					panelTwo.removeAll();
-					createFriendPanel();
-					errorLabel.setText("Friend is added!");
-					errorLabel.setVisible(true);
-				} catch (TwitterException e1) {
-					LOG.info("Sorry this page doesn't exist");
-					errorLabel.setText("Sorry this page doesn't exist");
-					errorLabel.setVisible(true);
-				}
+				fl.addFriend(textField.getText().trim());
+				panelTwo.removeAll();
+				createFriendPanel();
+				errorLabel.setText("Friend is added!");
+				errorLabel.setVisible(true);
 
 			}
 		});
@@ -409,18 +409,18 @@ public class MainFrame extends JFrame {
 
 	private void createConversationsListPanel() {
 		panelTwo.setName("conversationsList");
-		LOG.info(panelTwo.getName());
+		LOG.debug(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		panelTwo.setLayout(layout);	
+		panelTwo.setLayout(layout);
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
 		for (String s : udm.conversationsList()) {
 			dlm.addElement(s);
 		}
 		final JList<String> nameList = new JList<String>(dlm);
-		JScrollPane scrollPane = new JScrollPane(nameList);		
-		scrollPane.setBorder(BorderFactory.createEtchedBorder());		
+		JScrollPane scrollPane = new JScrollPane(nameList);
+		scrollPane.setBorder(BorderFactory.createEtchedBorder());
 
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addComponent(scrollPane));
@@ -439,34 +439,35 @@ public class MainFrame extends JFrame {
 
 			@Override
 			public void mouseEntered(MouseEvent arg0) {
-				// TODO Auto-generated method stub
+				//no code
 
 			}
 
 			@Override
 			public void mouseExited(MouseEvent arg0) {
-				// TODO Auto-generated method stub
+				//no code
 
 			}
 
 			@Override
 			public void mousePressed(MouseEvent arg0) {
-				// TODO Auto-generated method stub
+				//no code
 
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent arg0) {
-				// TODO Auto-generated method stub
+				//no code
 
-			} });
+			}
+		});
 	}
 
 	private String createInternalConversationPanel(String n) {
 		final String name = n;
 		setCurrentName(name);
 		panelTwo.setName("internalConversation");
-		LOG.info(panelTwo.getName());
+		LOG.debug(panelTwo.getName());
 		GroupLayout layout = new GroupLayout(panelTwo);
 		layout.setAutoCreateContainerGaps(true);
 		layout.setAutoCreateGaps(true);
@@ -475,29 +476,29 @@ public class MainFrame extends JFrame {
 		JPanel container = new JPanel();
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
-		LinkedList<Conversation> conv = udm.setConversationMessages(name);		
-		for (Conversation c : conv) {			
+		LinkedList<Conversation> conv = udm.setConversationMessages(name);
+		for (Conversation c : conv) {
 			JPanel panel = new JPanel();
 			panel.setBorder(BorderFactory.createEtchedBorder());
 			JLabel label = new JLabel();
 			JTextArea textArea = new JTextArea();
 			BorderLayout panelLayout = new BorderLayout();
-			panel.setLayout(panelLayout);	
-			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");				
+			panel.setLayout(panelLayout);
+			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 			String dateTime = dateFormat.format(c.getDate());
-			if (c.isSent()) {				
+			if (c.isSent()) {
 				label.setText(dateTime);
 				textArea.setBorder(BorderFactory.createEtchedBorder());
 				textArea.setBackground(Color.YELLOW);
 				textArea.setWrapStyleWord(true);
 				textArea.setLineWrap(true);
 				textArea.setEditable(false);
-				textArea.setText(c.getText());				
+				textArea.setText(c.getText());
 				panel.add(textArea, BorderLayout.WEST);
 				panel.add(label, BorderLayout.CENTER);
 
 			}
-			if (!c.isSent()) {							
+			if (!c.isSent()) {
 				label.setText(dateTime);
 				textArea.setBorder(BorderFactory.createEtchedBorder());
 				textArea.setBackground(Color.LIGHT_GRAY);
@@ -516,22 +517,22 @@ public class MainFrame extends JFrame {
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setBorder(BorderFactory.createEtchedBorder());
 
-		JPanel messagePanel = new JPanel();		
+		JPanel messagePanel = new JPanel();
 		BorderLayout panelLayout = new BorderLayout();
-		messagePanel.setLayout(panelLayout);	
+		messagePanel.setLayout(panelLayout);
 		messagePanel.setBorder(BorderFactory.createEtchedBorder());
-		
+
 		final JTextArea messageArea = new JTextArea(25, 1);
 		messageArea.setWrapStyleWord(true);
 		messageArea.setLineWrap(true);
-		messageArea.setEditable(true);		
+		messageArea.setEditable(true);
 		AbstractDocument pDoc = (AbstractDocument) messageArea.getDocument();
 		pDoc.setDocumentFilter(new DocumentSizeFilter(140));
 
 		JScrollPane messageAreaScrollPane = new JScrollPane(messageArea);
 		messageAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		messageAreaScrollPane.setBorder(BorderFactory.createEtchedBorder());
-		
+
 		messagePanel.add(messageAreaScrollPane);
 
 		final JLabel sendStatus = new JLabel();
@@ -544,16 +545,17 @@ public class MainFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				boolean sended = udm.sentDirectMessageTo(name, messageArea.getText());
 				if (sended) {
-					LOG.info("Direct Message sended");
-					sendStatus.setText("Message sended");					
+					LOG.debug("Direct Message sended");
+					sendStatus.setText("Message sended");
 					sendStatus.setVisible(true);
 				}
 				if (!sended) {
-					LOG.info("Direct Message not sended");
+					LOG.debug("Direct Message not sended");
 					sendStatus.setText("Message not sended");
 					sendStatus.setVisible(true);
 				}
-			} });
+			}
+		});
 
 		JButton backButton = new JButton("Back");
 		backButton.addActionListener(new ActionListener() {
@@ -584,37 +586,37 @@ public class MainFrame extends JFrame {
 
 	private void createHomeTimeLinePanel() {
 		timeLinePanel.setName("homeTimeLine");
-		LOG.info(timeLinePanel.getName());
+		LOG.debug(timeLinePanel.getName());
 		timeLinePanel.setLayout(new BorderLayout());
 		JPanel container = new JPanel();
-		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);		
-		container.setLayout(layout);		
-			for (Tweets t : tl.getTimeLineList()) {			
-				JPanel panel = new JPanel();
-				BorderLayout panelLayout = new BorderLayout();
-				panel.setBackground(Color.GRAY);				
-				panel.setLayout(panelLayout);
-				panel.setBorder(BorderFactory.createEtchedBorder());	
+		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
+		container.setLayout(layout);
+		for (Tweets t : tl.getTimeLineList()) {
+			JPanel panel = new JPanel();
+			BorderLayout panelLayout = new BorderLayout();
+			panel.setBackground(Color.GRAY);
+			panel.setLayout(panelLayout);
+			panel.setBorder(BorderFactory.createEtchedBorder());
 
-				final JTextArea textArea = new JTextArea();
-				JLabel label = new JLabel();
-				label.setText(t.getName());				
-				DefaultCaret caret = (DefaultCaret) textArea.getCaret();
-				caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);								
-				textArea.append(t.getText() + " ");
-				textArea.setEditable(false);
-				textArea.setWrapStyleWord(true);
-				textArea.setLineWrap(true);				
+			final JTextArea textArea = new JTextArea();
+			JLabel label = new JLabel();
+			label.setText(t.getName());
+			DefaultCaret caret = (DefaultCaret) textArea.getCaret();
+			caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+			textArea.append(t.getText() + " ");
+			textArea.setEditable(false);
+			textArea.setWrapStyleWord(true);
+			textArea.setLineWrap(true);
 
-				textArea.addMouseListener(new ShowUrlFromTimeLine(textArea)); 
+			textArea.addMouseListener(new ShowUrlFromTimeLine(textArea));
 
-				panel.add(textArea, BorderLayout.CENTER);
-				panel.add(label, BorderLayout.NORTH);
-				container.add(panel);			
-			}
+			panel.add(textArea, BorderLayout.CENTER);
+			panel.add(label, BorderLayout.NORTH);
+			container.add(panel);
+		}
 
 		JScrollPane timeLineScrollPane = new JScrollPane(container);
-		timeLineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);		
+		timeLineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		timeLinePanel.add(BorderLayout.CENTER, timeLineScrollPane);
 
 	}
@@ -622,13 +624,13 @@ public class MainFrame extends JFrame {
 	private void createInternaHomeTimeLinelPanel(String text) {
 		String tweetText = text;
 		timeLinePanel.setName("internalHomeTimeLine");
-		LOG.info(timeLinePanel.getName());
+		LOG.debug(timeLinePanel.getName());
 		GroupLayout layout = new GroupLayout(timeLinePanel);
 		timeLinePanel.setLayout(layout);
 		timeLinePanel.setBackground(Color.WHITE);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
-		JButton backButton = new JButton("back");		
+		JButton backButton = new JButton("back");
 		final JTextArea textArea = new JTextArea();
 		textArea.setText(tweetText);
 		textArea.setEditable(false);
@@ -640,19 +642,17 @@ public class MainFrame extends JFrame {
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(backButton)
 						.addComponent(textArea)
-						));
+				));
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addComponent(backButton)
 				.addComponent(textArea));
 
-
-
 		backButton.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				timeLinePanel.removeAll();				
+
+				timeLinePanel.removeAll();
 				createHomeTimeLinePanel();
 				timeLinePanel.repaint();
 				timeLinePanel.revalidate();
@@ -675,20 +675,20 @@ public class MainFrame extends JFrame {
 		JPanel panel = new JPanel();
 		panel.setBackground(color);
 		panel.setPreferredSize(dimension);
-		return panel;		
+		return panel;
 	}
 
-
-	class AutoUpdate extends SwingWorker <Object, Object> {
+	class AutoUpdate extends SwingWorker<Object, Object> {
 
 		@Override
 		protected Object doInBackground() throws Exception {
 			tl.setTimeLineList();
-			LOG.info("Time Line has been updated");			
+			LOG.debug("Time Line has been updated");
 			udm.setSent();
 			udm.setRecieved();
 			return null;
 		}
+
 		@Override
 		protected void done() {
 			if ("null".equals(timeLinePanel.getName()) | "homeTimeLine".equals(timeLinePanel.getName())) {
@@ -704,7 +704,7 @@ public class MainFrame extends JFrame {
 				panelTwo.revalidate();
 			}
 			if ("internalConversation".equals(panelTwo.getName())) {
-				panelTwo.removeAll();	
+				panelTwo.removeAll();
 				createInternalConversationPanel(getCurrentName());
 				panelTwo.repaint();
 				panelTwo.revalidate();
@@ -712,96 +712,100 @@ public class MainFrame extends JFrame {
 		}
 	}
 
-	private final class ShowUrl implements MouseListener {
+	private class ShowUrl implements MouseListener {
 		private JTextArea textArea;
+
 		private ShowUrl(JTextArea ta) {
 			this.textArea = ta;
 		}
 
 		@Override
-		public void mouseClicked(MouseEvent me) {			
+		public void mouseClicked(MouseEvent me) {
 			int x = me.getX();
-			int y = me.getY();				
+			int y = me.getY();
 			String text = textArea.getText();
 			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
 			String regexWord = "(\\s{1})|(\\).)";
 			System.out.println("X :" + x);
 			System.out.println("Y :" + y);
 			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);			
+			System.out.println("StartOffset :" + startOffset);
 			String[] array = text.split(regexWord);
 			System.out.println(Arrays.toString(array));
 
 			for (String s : array) {
 				if (s.matches(regexUrl)) {
-					System.out.println(" string matched");					
+					System.out.println(" string matched");
 					int start = text.indexOf(s);
 					int finish = start + s.length();
 					if (start <= startOffset & startOffset <= finish) {
 						System.out.println(" startOffset target!!!");
 						Desktop desktop = Desktop.getDesktop();
-						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
-						 		try {
-						 			String urlString = s; 
-									URL url = new URL(urlString);
-									desktop.browse(url.toURI());
-									System.out.println("Open URL");
-									break;
-						 		} catch (IOException | URISyntaxException e) {
-								// TODO Auto-generated catch block
+						if (desktop.isSupported(Desktop.Action.BROWSE)) {
+							try {
+								String urlString = s;
+								URL url = new URL(urlString);
+								desktop.browse(url.toURI());
+								System.out.println("Open URL");
+								break;
+							} catch (IOException e) {
+								LOG.error("IOException", e);
 								e.printStackTrace();
-						 		}
+							} catch (URISyntaxException e) {
+								LOG.error("URISyntaxExceptin :", e);
+							}
 						}
 					}
 				}
-			}			
+			}
 		}
-
 
 		@Override
 		public void mouseEntered(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
 
 		@Override
 		public void mouseExited(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
 
 		@Override
 		public void mousePressed(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
 
 		@Override
 		public void mouseReleased(MouseEvent arg0) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
 
 	}
 
-	private final class ShowUrlFromTimeLine implements MouseListener  {
+	private class ShowUrlFromTimeLine implements MouseListener {
 		private JTextArea textArea;
+
 		private ShowUrlFromTimeLine(JTextArea ta) {
 			this.textArea = ta;
 
 		}
+
 		@Override
 		public void mouseClicked(MouseEvent me) {
 			boolean goInto = true;
 			int x = me.getX();
-			int y = me.getY();				
+			int y = me.getY();
 			String text = textArea.getText();
 			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
 			String regexWord = "(\\s{1})|(\\).)";
 			System.out.println("X :" + x);
 			System.out.println("Y :" + y);
 			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);			
+			System.out.println("StartOffset :" + startOffset);
 			String[] array = text.split(regexWord);
 			System.out.println(Arrays.toString(array));
 
@@ -814,21 +818,23 @@ public class MainFrame extends JFrame {
 					if (start <= startOffset & startOffset <= finish) {
 						System.out.println(" startOffset target!!!");
 						Desktop desktop = Desktop.getDesktop();
-						if (desktop.isSupported(Desktop.Action.BROWSE)) {						
-						 		try {
-						 			String urlString = s; 
-									URL url = new URL(urlString);
-									desktop.browse(url.toURI());
-									System.out.println("Open URL");
-									break;
-						 		} catch (IOException | URISyntaxException e) {
-								// TODO Auto-generated catch block
+						if (desktop.isSupported(Desktop.Action.BROWSE)) {
+							try {
+								String urlString = s;
+								URL url = new URL(urlString);
+								desktop.browse(url.toURI());
+								System.out.println("Open URL");
+								break;
+							} catch (IOException e) {
+								LOG.error("IOException", e);
 								e.printStackTrace();
-						 		}
+							} catch (URISyntaxException e) {
+								LOG.error("URISyntaxExceptin :", e);
+							}
 						}
 					}
 					else {
-						timeLinePanel.removeAll();					
+						timeLinePanel.removeAll();
 						createInternaHomeTimeLinelPanel(textArea.getText());
 						timeLinePanel.revalidate();
 						timeLinePanel.repaint();
@@ -838,7 +844,7 @@ public class MainFrame extends JFrame {
 				}
 			}
 			if (goInto) {
-				timeLinePanel.removeAll();					
+				timeLinePanel.removeAll();
 				createInternaHomeTimeLinelPanel(textArea.getText());
 				timeLinePanel.revalidate();
 				timeLinePanel.repaint();
@@ -848,36 +854,43 @@ public class MainFrame extends JFrame {
 
 		@Override
 		public void mouseEntered(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
+
 		@Override
 		public void mouseExited(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
+
 		@Override
 		public void mousePressed(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
+
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
+			//no code
+
 		}
 	}
 
-	class StartEnd {
+	private class StartEnd {
 		private int start;
 		private int end;
+
 		StartEnd(int s, int e) {
+
 			this.start = s;
 			this.end = e;
 		}
+
 		public int getStart() {
 			return start;
 		}
+
 		public int getEnd() {
 			return end;
 		}

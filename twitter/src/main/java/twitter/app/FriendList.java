@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -18,8 +19,8 @@ import twitter4j.User;
 import twitter4j.internal.logging.Logger;
 
 public class FriendList {
-	public final static Logger LOG = Logger.getLogger(FriendList.class);
-	private Twitter twitter;		
+	private Logger LOG = Logger.getLogger(FriendList.class.getClass());
+	private Twitter twitter;
 	private LinkedHashSet<Friend> friendList = new LinkedHashSet<Friend>();
 
 	public FriendList(Twitter twitter) {
@@ -29,112 +30,114 @@ public class FriendList {
 		if (exist) {
 			readFriendListFile();
 		}
-		if (!exist) {
+		else {
 			createFriendList();
 			createFriendListFile();
-
 		}
-	}
-	private void createFriendList() {
-		try {				
-			long[] friendsId = twitter.getFriendsIDs(-1).getIDs();
-			int start = 0;
-			int finish = 100;				
-			ArrayList<Long> tempIdsArrayList  = new ArrayList<Long>();
-			boolean check = true;
-			while (check) {
-				for (int i = start; i < finish; i++) {
-					tempIdsArrayList.add(friendsId[i]);						
-					if (friendsId.length - 1 == i) {
-						check = false;
-						break;
-					}
-				}					
-				start = start + 100;
-				finish = finish + 100;
-				long[] ids = new long[tempIdsArrayList.size()];
-				int i = 0;
-				for (Long l : tempIdsArrayList) {
-					ids[i++] = (Long) l;
-				}		
-
-				ResponseList<User> user = twitter.lookupUsers(ids);
-				tempIdsArrayList.clear();
-				for (User u : user) {
-					friendList.add(new Friend(u.getId(), u.getName(), u.getScreenName()));
-				}					
-			}
-		} catch (TwitterException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	}
 
 	public LinkedHashSet<Friend> getFriendList() {
-		return friendList;		
+		return friendList;
 	}
 
-	public void deleteFriend(String selectedValue) {
+	private void createFriendList() {
 		try {
-			String name = selectedValue.substring(0, selectedValue.indexOf("@")).trim();			
-			Iterator<Friend> it = friendList.iterator();
-			do {
-				Friend element = it.next();
-				if (element.getName().equals(name)) {
-					twitter.destroyFriendship(element.getId());
-					friendList.remove(element);
-					break;
+			long[] friendsIDs = twitter.getFriendsIDs(-1).getIDs();
+			for (int i = 0; i < friendsIDs.length; i += 100) {
+				int startIndex = i;
+				int endIndex = i + 100;
+				long[] temp;
+				temp = Arrays.copyOfRange(friendsIDs, startIndex, endIndex);
+				ResponseList<User> users = twitter.lookupUsers(temp);
+				for (User u : users) {
+					friendList.add(new Friend(u.getId(), u.getName(), u.getScreenName()));
 				}
 			}
-			while(it.hasNext());
-			File file = new File("FriendList.txt");
-			file.delete();
-			createFriendListFile();
-		} 
-		catch (TwitterException e) {			
-			LOG.warn("Twitter exception");
-		}
-		catch (ConcurrentModificationException t) {
-			LOG.warn("ConcurrentModificationException occurs, but FriendListFile was create");
-			createFriendListFile();
-		}
 
+		} catch (TwitterException te) {
+			LOG.error("Twitter Exception :" + te.getStatusCode(), te);
+		}
 	}
 
-	public void addFriend(String user) throws TwitterException {
-		try {			
-			String screenName = user.substring(0, user.length());
-			twitter.createFriendship(screenName);			
-			long id = twitter.showUser(screenName).getId();	
-			String name = twitter.showUser(screenName).getName();
-			friendList.add(new Friend(id, name, screenName));
+	public void deleteFriend(String selectedFriend) {
+		FriendListFileExist file = new FriendListFileExist();
+		boolean exist = file.isFriendListFileExist();
+		if (exist) {
+			try {
+				String selectedFriendName = selectedFriend.substring(0, selectedFriend.indexOf("@")).trim();
+				for (Friend f : friendList) {
+					if (f.getName().equals(selectedFriendName)) {
+						twitter.destroyFriendship(f.getId());
+						friendList.remove(f);
+						break;
+					}
+				}
+				File friendListFile = new File("FriendList.txt");
+				friendListFile.delete();
+				createFriendListFile();
+			} catch (TwitterException te) {
+				LOG.error("Twitter Exception :" + te.getStatusCode(), te);
+			}
+		}
+		else {
+			LOG.error("FriendFile missing pls restart the application");
+		}
+	}
+
+	public void addFriend(String newFriendName) {
+		FriendListFileExist file = new FriendListFileExist();
+		boolean exist = file.isFriendListFileExist();
+		if (exist) {
 			PrintWriter pw = null;
-			pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
-			pw.println(id + " " + name + "@" + screenName);
-			pw.close();
-		} 	
-		catch (FileNotFoundException e) {
-			LOG.warn("FriendList file don't found");
+			try {
+				String friendsScreenName = newFriendName.substring(0, newFriendName.length());
+				twitter.createFriendship(friendsScreenName);
+
+				long friendID = twitter.showUser(friendsScreenName).getId();
+				String friendName = twitter.showUser(friendsScreenName).getName();
+				friendList.add(new Friend(friendID, friendName, friendsScreenName));
+
+				pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
+				pw.println(friendID + " " + friendName + "@" + friendsScreenName);
+			} catch (TwitterException te) {
+				LOG.error("Twitter Exception :" + te.getStatusCode(), te);
+			} catch (FileNotFoundException e) {
+				LOG.error("FriendList.txt file not found :", e);
+				e.printStackTrace();
+			}
+
+			finally {
+				if (pw != null) {
+					pw.close();
+				}
+
+			}
+		}
+		else {
+			LOG.error("FriendFile missing pls restart the application");
 		}
 	}
 
 	private void createFriendListFile() {
-         PrintWriter pw = null;
-         try {
+		PrintWriter pw = null;
+		try {
 			pw = new PrintWriter(new FileOutputStream("FriendList.txt"));
-			for ( Friend f : friendList) {
-	        	 pw.println(f.getId() + " " + f.getName() + "@" + f.getScreenName());
-	         }        
-	         pw.close();
+			for (Friend f : friendList) {
+				pw.println(f.getId() + " " + f.getName() + "@" + f.getScreenName());
+			}
 		} catch (FileNotFoundException e) {
 			LOG.warn("Can't create file");
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
 		}
+	}
 
-    }
 	private void readFriendListFile() {
+		BufferedReader br = null;
 		try {
-			BufferedReader br = new BufferedReader(new FileReader("FriendList.txt"));
+			br = new BufferedReader(new FileReader("FriendList.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -143,44 +146,62 @@ public class FriendList {
 				String screenName = line.substring(line.indexOf("@") + 1, line.length());
 				friendList.add(new Friend(id, name, screenName));
 			}
-			LOG.info("Friend list read correctly");
-			br.close();
-		}
-		catch (FileNotFoundException e) {
-			LOG.warn("FriendList file don't found");
-		}
-		catch (IOException i) {
-			LOG.warn("FriendList file don't found");
+			LOG.debug("FriendList.txt file read correctly");
+		} catch (FileNotFoundException e) {
+			LOG.error("FriendList file not found", e);
+		} catch (IOException i) {
+			LOG.error("FriendList file not found", i);
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					LOG.error("Stream cant be close in finally block", e);
+				}
+			}
 		}
 	}
-}
+	
+protected class Friend {
+		private long id;
+		private String name;
+		private String screenName;
 
-class Friend {
-	private long id;
-	private String name;
-	private String screenName;
-	Friend(long id, String name, String screenName) {
-		this.id = id;
-		this.name = name.trim();		
-		this.screenName = screenName.trim();
-	}
-	public long getId() {
-		return id;
-	}
-	public String getName() {
-		return name;
-	}	
-	public void setId(long id) {
-		this.id = id;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getScreenName() {
-		return screenName;
-	}
-	public void setScreenName(String screenName) {
-		this.screenName = screenName;
+		Friend(long id, String name, String screenName) {
+			if (name == null | screenName == null) {
+				throw new IllegalArgumentException("Parameter name and screenName should not be null or empty. Current value is " + name + " " + screenName);
+			}
+			else {
+				
+			}
+			this.id = id;
+			this.name = name.trim();
+			this.screenName = screenName.trim();
+		}
+
+		public long getId() {
+			return id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setId(long id) {
+			this.id = id;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getScreenName() {
+			return screenName;
+		}
+
+		public void setScreenName(String screenName) {
+			this.screenName = screenName;
+		}
 	}
 }
 
