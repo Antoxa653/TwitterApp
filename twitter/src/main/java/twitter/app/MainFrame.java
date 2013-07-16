@@ -717,28 +717,20 @@ public class MainFrame extends JFrame {
 			int y = me.getY();
 			String text = textArea.getText();
 			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regexWord = "(\\s{1})|(\\).)";
-			System.out.println("X :" + x);
-			System.out.println("Y :" + y);
-			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);
+			String regexWord = "(\\s{1})|(\\).)";			
+			int startOffset = textArea.viewToModel(new Point(x, y));			
 			String[] array = text.split(regexWord);
-			System.out.println(Arrays.toString(array));
-
 			for (String s : array) {
-				if (s.matches(regexUrl)) {
-					System.out.println(" string matched");
+				if (s.matches(regexUrl)) {					
 					int start = text.indexOf(s);
 					int finish = start + s.length();
-					if (start <= startOffset & startOffset <= finish) {
-						System.out.println(" startOffset target!!!");
+					if (start <= startOffset & startOffset <= finish) {						
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {
 							try {
 								String urlString = s;
 								URL url = new URL(urlString);
-								desktop.browse(url.toURI());
-								System.out.println("Open URL");
+								desktop.browse(url.toURI());								
 								break;
 							} catch (IOException e) {
 								LOG.error("IOException", e);
@@ -793,33 +785,24 @@ public class MainFrame extends JFrame {
 			int y = me.getY();
 			String text = textArea.getText();
 			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regexWord = "(\\s{1})|(\\).)";
-			System.out.println("X :" + x);
-			System.out.println("Y :" + y);
-			int startOffset = textArea.viewToModel(new Point(x, y));
-			System.out.println("StartOffset :" + startOffset);
+			String regexWord = "(\\s{1})|(\\).)";			
+			int startOffset = textArea.viewToModel(new Point(x, y));			
 			String[] array = text.split(regexWord);
-			System.out.println(Arrays.toString(array));
-
 			for (String s : array) {
-				if (s.matches(regexUrl)) {
-					System.out.println(" string matched");
+				if (s.matches(regexUrl)) {					
 					goInto = false;
 					int start = text.indexOf(s);
 					int finish = start + s.length();
-					if (start <= startOffset & startOffset <= finish) {
-						System.out.println(" startOffset target!!!");
+					if (start <= startOffset & startOffset <= finish) {						
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {
 							try {
 								String urlString = s;
 								URL url = new URL(urlString);
-								desktop.browse(url.toURI());
-								System.out.println("Open URL");
+								desktop.browse(url.toURI());								
 								break;
 							} catch (IOException e) {
-								LOG.error("IOException", e);
-								e.printStackTrace();
+								LOG.error("IOException", e);								
 							} catch (URISyntaxException e) {
 								LOG.error("URISyntaxExceptin :", e);
 							}
@@ -829,8 +812,7 @@ public class MainFrame extends JFrame {
 						timeLinePanel.removeAll();
 						createInternaHomeTimeLinelPanel(textArea.getText());
 						timeLinePanel.revalidate();
-						timeLinePanel.repaint();
-						System.out.println("goInto false - but im in");
+						timeLinePanel.repaint();						
 					}
 
 				}
@@ -839,8 +821,7 @@ public class MainFrame extends JFrame {
 				timeLinePanel.removeAll();
 				createInternaHomeTimeLinelPanel(textArea.getText());
 				timeLinePanel.revalidate();
-				timeLinePanel.repaint();
-				System.out.println("goInto true - and im in");
+				timeLinePanel.repaint();				
 			}
 		}
 
