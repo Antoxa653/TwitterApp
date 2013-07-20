@@ -23,12 +23,14 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class UserDirectMessage {
-	private Logger LOG = Logger.getLogger(getClass());
+	private final String sentMessagesFileLocation = "target/classes/SentMessages.txt";
+	private final String recievedMessagesFileLocation = "target/classes/RecievedMessages.txt";
+	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
 	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
 	private LinkedList<SentMessage> sent = new LinkedList<SentMessage>();
 	private LinkedList<Conversation> conv = new LinkedList<Conversation>();
-	private RateLimitation rl;
+	private RateLimitationChecker rl;
 
 	UserDirectMessage(Twitter t) {
 		this.twitter = t;
@@ -47,14 +49,14 @@ public class UserDirectMessage {
 		try {
 			DirectMessage message = twitter.sendDirectMessage(twitter.showUser(name).getId(), text);
 		} catch (TwitterException e) {
-			LOG.error("Error while try sending direct message to friend: " + e.getStatusCode() + " " + e);
+			log.error("Error while try sending direct message to friend: " + e.getStatusCode() + " " + e);
 			complit = false;
 		}
 		return complit;
 	}
 
 	public LinkedList<RecievedMessage> setRecieved() {
-		rl = new RateLimitation(twitter);
+		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages");
 		if (rateLimit >= 2) {
 			try {
@@ -63,24 +65,24 @@ public class UserDirectMessage {
 				for (DirectMessage m : recievedMessages) {
 					recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));
 				}
-				LOG.debug("Recieved Messages update");
+				log.debug("Recieved Messages update");
 			} catch (TwitterException e) {
-				LOG.error("Error occurs while updating recieved messages: " + e.getStatusCode() + " " + e);
+				log.error("Error occurs while updating recieved messages: " + e.getStatusCode() + " " + e);
 			}
 		}
 		if (rateLimit == 2) {
-			LOG.debug("RecievedMessages.txt file created");
+			log.debug("RecievedMessages.txt file created");
 			printRecieved();
 		}
 		if (rateLimit <= 1) {
-			LOG.debug("RecievedMessages.txt file readeding...");
+			log.debug("RecievedMessages.txt file readeding...");
 			readRecieved();
 		}
 		return recieved;
 	}
 
 	public LinkedList<SentMessage> setSent() {
-		rl = new RateLimitation(twitter);
+		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages/sent");
 		if (rateLimit >= 2) {
 			try {
@@ -89,18 +91,18 @@ public class UserDirectMessage {
 				for (DirectMessage m : sentMessages) {
 					sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));
 				}
-				LOG.debug("Sent Messages update");
+				log.debug("Sent Messages update");
 			} catch (TwitterException e) {
-				LOG.error("Error occurs while updating sent messages" + e.getStatusCode() + " " + e);
+				log.error("Error occurs while updating sent messages" + e.getStatusCode() + " " + e);
 
 			}
 		}
 		if (rateLimit == 2) {
-			LOG.debug("SentMessages file created");
+			log.debug("SentMessages file created");
 			printSent();
 		}
 		if (rateLimit <= 1) {
-			LOG.debug("SentMessages file reading...");
+			log.debug("SentMessages file reading...");
 			readSent();
 		}
 
@@ -132,8 +134,7 @@ public class UserDirectMessage {
 		}
 
 		Collections.sort(conv, new Comparator<Conversation>() {
-
-			@Override
+			
 			public int compare(Conversation o1, Conversation o2) {
 				if (o1.getDate() == o2.getDate()) {
 					return 0;
@@ -147,12 +148,12 @@ public class UserDirectMessage {
 	public void printSent() {
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream("SentMessages.txt"));
+			pw = new PrintWriter(new FileOutputStream(sentMessagesFileLocation));
 			for (SentMessage s : sent) {
 				pw.println(s.getId() + "@" + s.getRecipientName() + "(text)" + s.getText() + "(Date)" + s.getDate());
 			}
 		} catch (FileNotFoundException e) {
-			LOG.error("Error while try to create SentMessages.txt file", e);
+			log.error("Error while try to create SentMessages.txt file", e);
 		} finally {
 			if (pw != null) {
 				pw.close();
@@ -165,7 +166,7 @@ public class UserDirectMessage {
 		sent.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("SentMessages.txt"));
+			br = new BufferedReader(new FileReader(sentMessagesFileLocation));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -177,30 +178,30 @@ public class UserDirectMessage {
 				Date convertedDate = format.parse(dateString);
 				sent.add(new SentMessage(id, name, text, convertedDate));
 			}
-			LOG.debug("SentMessages read correctly");
+			log.debug("SentMessages read correctly");
 		} catch (FileNotFoundException e) {
-			LOG.error("SentMessages.txt file not found", e);
+			log.error("SentMessages.txt file not found", e);
 		} catch (ParseException pe) {
-			LOG.error("ParseException while parsing Date object", pe);
+			log.error("ParseException while parsing Date object", pe);
 
 		} catch (NumberFormatException e) {
-			LOG.error(
+			log.error(
 					"Thrown to indicate that the application has attempted to convert a string to one of the numeric types",
 					e);
 		} catch (IOException e) {
-			LOG.error("IOException while reading SentMessages.txt file: ", e);
+			log.error("IOException while reading SentMessages.txt file: ", e);
 		}
 	}
 
 	public void printRecieved() {
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream("RecievedMessages.txt"));
+			pw = new PrintWriter(new FileOutputStream(recievedMessagesFileLocation));
 			for (RecievedMessage r : recieved) {
 				pw.println(r.getId() + "@" + r.getSenderName() + "(text)" + r.getText() + "(Date)" + r.getDate());
 			}
 		} catch (FileNotFoundException e) {
-			LOG.error("Error while creating RecievedMessages.txt file", e);
+			log.error("Error while creating RecievedMessages.txt file", e);
 		} finally {
 			if (pw != null) {
 				pw.close();
@@ -213,7 +214,7 @@ public class UserDirectMessage {
 		recieved.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("RecievedMessages.txt"));
+			br = new BufferedReader(new FileReader(recievedMessagesFileLocation));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -225,24 +226,24 @@ public class UserDirectMessage {
 				Date convertedDate = format.parse(dateString);
 				recieved.add(new RecievedMessage(id, name, text, convertedDate));
 			}
-			LOG.debug("RecievedMessages read correctly");
+			log.debug("RecievedMessages read correctly");
 
 		} catch (FileNotFoundException e) {
-			LOG.error("RecievedMessages.txt file not found", e);
+			log.error("RecievedMessages.txt file not found", e);
 		} catch (ParseException pe) {
-			LOG.error("ParseException occurs while parsing Date object", pe);
+			log.error("ParseException occurs while parsing Date object", pe);
 		} catch (NumberFormatException e) {
-			LOG.error(
+			log.error(
 					"Thrown to indicate that the application has attempted to convert a string to one of the numeric types",
 					e);
 		} catch (IOException e) {
-			LOG.error("IOException occurs", e);
+			log.error("IOException occurs", e);
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					LOG.error("Error while trying to close bufferedreader stream: ", e);
+					log.error("Error while trying to close bufferedreader stream: ", e);
 				}
 			}
 		}

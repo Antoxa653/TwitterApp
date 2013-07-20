@@ -16,10 +16,11 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class TimeLine {
-	private Logger LOG = Logger.getLogger(getClass());
+	private final String timeLineFileLocation = "target/classes/TimeLine.txt";
+	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
 	private LinkedList<Tweets> timeLineList = new LinkedList<Tweets>();;
-	private RateLimitation rl;
+	private RateLimitationChecker rl;
 
 	public TimeLine(Twitter twitter) {
 		this.twitter = twitter;
@@ -30,7 +31,7 @@ public class TimeLine {
 	}
 
 	public void setTimeLineList() {
-		rl = new RateLimitation(twitter);
+		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/statuses/home_timeline");
 		if (rateLimit >= 2) {
 			try {
@@ -40,28 +41,28 @@ public class TimeLine {
 					timeLineList.add(new Tweets(status.getId(), status.getUser().getScreenName(), status.getText()));
 				}
 			} catch (TwitterException e) {
-				LOG.error("Error while updating timeline" + e.getStatusCode() + " " + e);
+				log.error("Error while updating timeline" + e.getStatusCode() + " " + e);
 			}
 		}
 		if (rateLimit == 2) {
-			LOG.debug("TimeLine writed in the TimeLine.txt file");
-			printTimeLineList();
+			log.debug("TimeLine writed in the TimeLine.txt file");
+			createTimeLineFile();
 		}
 		if (rateLimit <= 1) {
-			LOG.debug("TimeLine readed from the file TimeLine.txt");
-			readTimeLineList();
+			log.debug("TimeLine readed from the file TimeLine.txt");
+			readTimeLineFile();
 		}
 	}
 
-	public void printTimeLineList() {
+	public void createTimeLineFile() {
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream("TimeLine.txt"));
+			pw = new PrintWriter(new FileOutputStream(timeLineFileLocation));
 			for (Tweets t : timeLineList) {
 				pw.println(t.getId() + "@" + t.getName() + "(text)" + t.getText());
 			}
 		} catch (FileNotFoundException e) {
-			LOG.error("Can't create TimeLine.txt file");
+			log.error("Can't create TimeLine.txt file");
 		} finally {
 			if (pw != null) {
 				pw.close();
@@ -69,11 +70,11 @@ public class TimeLine {
 		}
 	}
 
-	public void readTimeLineList() {
+	public void readTimeLineFile() {
 		timeLineList.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("TimeLine.txt"));
+			br = new BufferedReader(new FileReader(timeLineFileLocation));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -82,17 +83,17 @@ public class TimeLine {
 				String text = line.substring(line.indexOf("(text)") + 6, line.length());
 				timeLineList.add(new Tweets(id, name, text));
 			}
-			LOG.debug("TimeLineList read correctly");
+			log.debug("TimeLineList read correctly");
 		} catch (FileNotFoundException e) {
-			LOG.error("TimeLine.txt file not found", e);
+			log.error("TimeLine.txt file not found", e);
 		} catch (IOException i) {
-			LOG.error("FriendList file don't found", i);
+			log.error("FriendList file don't found", i);
 		} finally {
 			if (br != null) {
 				try {
 					br.close();
 				} catch (IOException e) {
-					LOG.error("Error while trying to close bufferedreader strram", e);
+					log.error("Error while trying to close bufferedreader strram", e);
 
 				}
 			}

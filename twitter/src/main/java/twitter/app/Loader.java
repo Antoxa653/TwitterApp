@@ -5,12 +5,11 @@ import twitter4j.Twitter;
 import twitter4j.internal.logging.Logger;
 
 public class Loader {
-	private Logger LOG = Logger.getLogger(getClass());
 
 	public static void main(String[] args) {
 		final Twitter twitter = new TwitterInstance().getTwitter();
-		PropertiesExist prop = new PropertiesExist();
-		boolean exist = prop.isPropertiesExist();
+		ResourceFilesChecker resource = new ResourceFilesChecker();
+		boolean exist = resource.isTwitterPropertiesFileExist();
 		if (!exist) {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
@@ -22,10 +21,10 @@ public class Loader {
 		else {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
-					ProgressBarFrame pbf = new ProgressBarFrame();
-					Initialization init = new Initialization(pbf, twitter);
+					ProgressBarFrame progressBarFrame = new ProgressBarFrame();
+					TwitterResourcesInitialization init = new TwitterResourcesInitialization(progressBarFrame, twitter);
 					init.execute();
-					pbf.setVisible(true);
+					progressBarFrame.setVisible(true);
 				}
 			});
 		}

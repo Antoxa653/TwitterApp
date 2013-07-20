@@ -9,7 +9,7 @@ import javax.swing.text.DocumentFilter;
 import twitter4j.internal.logging.Logger;
 
 public class DocumentSizeFilter extends DocumentFilter {
-	private Logger LOG = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass());
 	private int maxCharacters;
 
 	public DocumentSizeFilter(int maxChars) {
@@ -25,7 +25,7 @@ public class DocumentSizeFilter extends DocumentFilter {
 				Toolkit.getDefaultToolkit().beep();
 			}
 		} catch (BadLocationException e) {
-			LOG.error("Bad location within document model :", e);			
+			log.error("Bad location within document model :", e);			
 		}
 
 	}
@@ -39,7 +39,7 @@ public class DocumentSizeFilter extends DocumentFilter {
 				Toolkit.getDefaultToolkit().beep();
 			}
 		} catch (BadLocationException e) {
-			LOG.error("Bad location within document model :", e);			
+			log.error("Bad location within document model :", e);			
 		}
 	}
 }

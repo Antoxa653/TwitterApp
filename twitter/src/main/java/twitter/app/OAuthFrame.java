@@ -32,7 +32,7 @@ import twitter4j.internal.logging.Logger;
 
 public class OAuthFrame extends JFrame {
 	private final Twitter twitter;
-	private Logger LOG = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass());
 	private URL url = null;
 	private JTextField pinTextField = null;
 	private JLabel errorLabel;
@@ -142,14 +142,14 @@ public class OAuthFrame extends JFrame {
 		okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				dispose();
-				PropertiesExist exist = new PropertiesExist();
+				ResourceFilesChecker resource = new ResourceFilesChecker();
 				if (oa.spellCheckPIN(pinTextField.getText()) && oa.OAuthSetup(pinTextField.getText())
-						&& exist.isPropertiesExist()) {
-					LOG.info("PIN spellcheck passed");
+						&& resource.isTwitterPropertiesFileExist()) {
+					log.info("PIN spellcheck passed");
 					EventQueue.invokeLater(new Runnable() {
 						public void run() {
 							ProgressBarFrame pbf = new ProgressBarFrame();
-							Initialization init = new Initialization(pbf, twitter);
+							TwitterResourcesInitialization init = new TwitterResourcesInitialization(pbf, twitter);
 							init.execute();
 							pbf.setVisible(true);
 						}
@@ -166,10 +166,10 @@ public class OAuthFrame extends JFrame {
 						try {
 							desktop.browse(url.toURI());
 						} catch (IOException e) {
-							LOG.error("IOException", e);
+							log.error("IOException", e);
 							e.printStackTrace();
 						} catch (URISyntaxException e) {
-							LOG.error("URISyntaxExceptin :", e);
+							log.error("URISyntaxExceptin :", e);
 						}
 				}
 			}
@@ -209,7 +209,7 @@ public class OAuthFrame extends JFrame {
 				public void actionPerformed(ActionEvent e) {
 
 					pinTextField.setText(pin);
-					LOG.debug("PIN entered");
+					log.debug("PIN entered");
 
 				}
 
@@ -227,20 +227,20 @@ public class OAuthFrame extends JFrame {
 		private String clipboardText;
 
 		ClipBoardText() {
-			
-				Transferable trans = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
-				if (trans != null & trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-					try {
-						clipboardText = (String) trans.getTransferData(DataFlavor.stringFlavor);
-					} catch (UnsupportedFlavorException e) {
-						LOG.error("UnsupportedFlavorException occurs while geting String from clipboard", e);
-						e.printStackTrace();
-					} catch (IOException e) {
-						LOG.error("IOException:", e);
-						
-					}
+
+			Transferable trans = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			if (trans != null & trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+				try {
+					clipboardText = (String) trans.getTransferData(DataFlavor.stringFlavor);
+				} catch (UnsupportedFlavorException e) {
+					log.error("UnsupportedFlavorException occurs while geting String from clipboard", e);
+					e.printStackTrace();
+				} catch (IOException e) {
+					log.error("IOException:", e);
+
 				}
-			 
+			}
+
 		}
 
 		public String getClipboardText() {

@@ -13,9 +13,10 @@ import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
 public class OAuth {
-	public static final Logger LOG = Logger.getLogger(OAuth.class);
 	private final String consumerKey = "QrLV7P1izPRAP5YwktX0g";
 	private final String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
+	private final String propertiesLocation = "target/classes/twitter4j.properties";
+	private Logger log = Logger.getLogger(OAuth.class);
 	private String access;
 	private String accessTokenSecret;
 	private RequestToken requestToken;
@@ -31,9 +32,9 @@ public class OAuth {
 		try {
 			requestToken = twitter.getOAuthRequestToken();
 		} catch (TwitterException e) {
-			LOG.error("Failed to receive a request token", e);
+			log.error("Failed to receive a request token", e);
 		}
-		LOG.debug("Request token received");
+		log.debug("Request token received");
 		return requestToken.getAuthorizationURL();
 	}
 
@@ -44,7 +45,7 @@ public class OAuth {
 				accessToken = twitter.getOAuthAccessToken(requestToken, pin);
 			}
 			else {
-				LOG.debug("No PIN code entered");
+				log.debug("No PIN code entered");
 				complit = false;
 			}
 			access = accessToken.getToken();
@@ -52,7 +53,7 @@ public class OAuth {
 			print(consumerKey, consumerSecret, access, accessTokenSecret);
 
 		} catch (TwitterException te) {
-			LOG.error("Unable to get the access token +" + te.getStatusCode() + " ", te);
+			log.error("Unable to get the access token +" + te.getStatusCode() + " ", te);
 			complit = false;
 		}
 		return complit;
@@ -63,7 +64,7 @@ public class OAuth {
 		try {
 			int num = Integer.parseInt(pin);
 		} catch (NumberFormatException e) {
-			LOG.error("Bad number format");
+			log.error("Bad number format");
 			complit = false;
 		}
 		return complit;
@@ -72,7 +73,7 @@ public class OAuth {
 	public void print(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream("twitter4j.properties"));
+			pw = new PrintWriter(new FileOutputStream(propertiesLocation));
 			pw.println("debug=false");
 			pw.println("oauth.consumerKey=" + consumerKey);
 			pw.println("oauth.consumerSecret=" + consumerSecret);
@@ -80,7 +81,7 @@ public class OAuth {
 			pw.println("oauth.accessTokenSecret=" + accessTokenSecret);
 
 		} catch (FileNotFoundException e) {
-			LOG.error("Can't create twitter4j.properties", e);
+			log.error("Can't create twitter4j.properties", e);
 
 		} finally {
 			if (pw != null) {
