@@ -1,6 +1,7 @@
 package twitter.app;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -23,8 +24,8 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class UserDirectMessage {
-	private final String sentMessagesFileLocation = "target/classes/SentMessages.txt";
-	private final String recievedMessagesFileLocation = "target/classes/RecievedMessages.txt";
+	private final String sentMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication";
+	private final String recievedMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
 	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
@@ -72,11 +73,11 @@ public class UserDirectMessage {
 		}
 		if (rateLimit == 2) {
 			log.debug("RecievedMessages.txt file created");
-			printRecieved();
+			createRecievedMessagesFile();
 		}
 		if (rateLimit <= 1) {
 			log.debug("RecievedMessages.txt file readeding...");
-			readRecieved();
+			readRecievedMessagesFile();
 		}
 		return recieved;
 	}
@@ -99,11 +100,11 @@ public class UserDirectMessage {
 		}
 		if (rateLimit == 2) {
 			log.debug("SentMessages file created");
-			printSent();
+			createSentMessagesFile();
 		}
 		if (rateLimit <= 1) {
 			log.debug("SentMessages file reading...");
-			readSent();
+			readSentMessagesFile();
 		}
 
 		return sent;
@@ -134,7 +135,7 @@ public class UserDirectMessage {
 		}
 
 		Collections.sort(conv, new Comparator<Conversation>() {
-			
+
 			public int compare(Conversation o1, Conversation o2) {
 				if (o1.getDate() == o2.getDate()) {
 					return 0;
@@ -145,10 +146,12 @@ public class UserDirectMessage {
 		return conv;
 	}
 
-	public void printSent() {
+	public void createSentMessagesFile() {
+		File userDir = new File(sentMessagesFileLocation);
+		userDir.mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(sentMessagesFileLocation));
+			pw = new PrintWriter(new FileOutputStream(userDir + "/SentMessages.txt"));
 			for (SentMessage s : sent) {
 				pw.println(s.getId() + "@" + s.getRecipientName() + "(text)" + s.getText() + "(Date)" + s.getDate());
 			}
@@ -162,11 +165,11 @@ public class UserDirectMessage {
 
 	}
 
-	public void readSent() {
+	public void readSentMessagesFile() {
 		sent.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(sentMessagesFileLocation));
+			br = new BufferedReader(new FileReader(sentMessagesFileLocation + "/SentMessages.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -193,10 +196,12 @@ public class UserDirectMessage {
 		}
 	}
 
-	public void printRecieved() {
+	public void createRecievedMessagesFile() {
+		File userDir = new File(recievedMessagesFileLocation);
+		userDir.mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(recievedMessagesFileLocation));
+			pw = new PrintWriter(new FileOutputStream(userDir + "/RecievedMessages.txt"));
 			for (RecievedMessage r : recieved) {
 				pw.println(r.getId() + "@" + r.getSenderName() + "(text)" + r.getText() + "(Date)" + r.getDate());
 			}
@@ -210,11 +215,11 @@ public class UserDirectMessage {
 
 	}
 
-	public void readRecieved() {
+	public void readRecievedMessagesFile() {
 		recieved.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(recievedMessagesFileLocation));
+			br = new BufferedReader(new FileReader(recievedMessagesFileLocation + "/RecievedMessages.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

@@ -5,11 +5,16 @@ import java.io.File;
 import org.apache.log4j.Logger;
 
 public class ResourceFilesChecker {
-	private final String friendListFileLocation = "target/classes/FriendList.txt";
-	private final String twitter4jPropertiesFileLocation = "target/classes/twitter4j.properties";
-	private final String sentMessagesFileLocaion = "target/classes/SentMessages.txt";
-	private final String recievedMessagesFileLocation = "target/classes/RecievedMessages.txt";
-	private final String timeLineFileLocation = "target/classes/TimeLine.txt";
+	private final String friendListFileLocation = System.getProperty("user.home") + "/TwitterApplication"
+			+ "/FriendList.txt";
+	private final String twitter4jPropertiesFileLocation = System.getProperty("user.home") + "/TwitterApplication"
+			+ "/twitter4j.properties";
+	private final String sentMessagesFileLocaion = System.getProperty("user.home") + "/TwitterApplication"
+			+ "/SentMessages.txt";
+	private final String recievedMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication"
+			+ "/RecievedMessages.txt";
+	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication"
+			+ "/TimeLine.txt";
 	private Logger log = Logger.getLogger(getClass());
 	private File friendListFile;
 	private File twitterPropertiesFile;

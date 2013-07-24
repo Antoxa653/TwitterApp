@@ -1,6 +1,7 @@
 package twitter.app;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -16,11 +17,11 @@ import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
 public class TimeLine {
-	private final String timeLineFileLocation = "target/classes/TimeLine.txt";
+	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
 	private LinkedList<Tweets> timeLineList = new LinkedList<Tweets>();;
-	private RateLimitationChecker rl;
+	private RateLimitationChecker rateLimatation;
 
 	public TimeLine(Twitter twitter) {
 		this.twitter = twitter;
@@ -31,8 +32,8 @@ public class TimeLine {
 	}
 
 	public void setTimeLineList() {
-		rl = new RateLimitationChecker(twitter);
-		int rateLimit = rl.checkLimitStatusForEndpoint("/statuses/home_timeline");
+		rateLimatation = new RateLimitationChecker(twitter);
+		int rateLimit = rateLimatation.checkLimitStatusForEndpoint("/statuses/home_timeline");
 		if (rateLimit >= 2) {
 			try {
 				timeLineList.clear();
@@ -55,9 +56,11 @@ public class TimeLine {
 	}
 
 	public void createTimeLineFile() {
+		File userDir = new File(timeLineFileLocation);
+		userDir.mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(timeLineFileLocation));
+			pw = new PrintWriter(new FileOutputStream(userDir + "/TimeLine.txt"));
 			for (Tweets t : timeLineList) {
 				pw.println(t.getId() + "@" + t.getName() + "(text)" + t.getText());
 			}
@@ -74,7 +77,7 @@ public class TimeLine {
 		timeLineList.clear();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(timeLineFileLocation));
+			br = new BufferedReader(new FileReader(timeLineFileLocation + "/TimeLine.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

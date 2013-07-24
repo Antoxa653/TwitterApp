@@ -58,18 +58,18 @@ public class MainFrame extends JFrame {
 	private JPanel buttonPanel;
 	private JPanel panelTwo;
 	private JPanel timeLinePanel;
-	private FriendList fl;
-	private UserDirectMessage udm;
-	private UserStatus us;
-	private TimeLine tl;
-	private AutoUpdate au;
+	private FriendList friendList;
+	private UserDirectMessage userDirectMessage;
+	private UserStatus userStatus;
+	private TimeLine timeLine;
+	private AutoUpdate autoUpdate;
 	private String currentName;
 
 	MainFrame(TwitterInitialization ti) {
-		this.fl = ti.getFl();
-		this.udm = ti.getUdm();
-		this.us = ti.getUs();
-		this.tl = ti.getTlu();
+		this.friendList = ti.getFl();
+		this.userDirectMessage = ti.getUdm();
+		this.userStatus = ti.getUs();
+		this.timeLine = ti.getTlu();
 
 		Toolkit kit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = kit.getScreenSize();
@@ -101,8 +101,8 @@ public class MainFrame extends JFrame {
 			@Override
 			public void run() {
 				log.debug("Time Line Updating...");
-				au = new AutoUpdate();
-				au.execute();
+				autoUpdate = new AutoUpdate();
+				autoUpdate.execute();
 			}
 		}, 0, 180000);
 
@@ -139,7 +139,6 @@ public class MainFrame extends JFrame {
 
 		logoutItem.addActionListener(new ActionListener() {
 
-			
 			public void actionPerformed(ActionEvent arg0) {
 				dispose();
 				LogOut logout = new LogOut();
@@ -148,14 +147,13 @@ public class MainFrame extends JFrame {
 		});
 		exit.addActionListener(new ActionListener() {
 
-			
 			public void actionPerformed(ActionEvent arg0) {
 				dispose();
-				if (au.getState() == SwingWorker.StateValue.STARTED) {
+				if (autoUpdate.getState() == SwingWorker.StateValue.STARTED) {
 					do {
 
 					}
-					while (au.getState() == SwingWorker.StateValue.DONE);
+					while (autoUpdate.getState() == SwingWorker.StateValue.DONE);
 				}
 				System.exit(0);
 
@@ -205,7 +203,7 @@ public class MainFrame extends JFrame {
 		});
 
 		directMessages.addActionListener(new ActionListener() {
-			
+
 			public void actionPerformed(ActionEvent arg0) {
 				panelTwo.removeAll();
 				createConversationsListPanel();
@@ -216,7 +214,7 @@ public class MainFrame extends JFrame {
 	private void createPanelWithLogo() {
 		panelTwo.setName("emptyPanel");
 		log.debug(panelTwo.getName());
-		panelTwo.setLayout(new BorderLayout());				
+		panelTwo.setLayout(new BorderLayout());
 		ImageIcon icon = new ImageIcon(imageLocation);
 		JLabel label = new JLabel();
 		label.setIcon(icon);
@@ -244,7 +242,7 @@ public class MainFrame extends JFrame {
 		JButton send = new JButton("Update your status!");
 		send.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				boolean updated = us.update(textArea.getText());
+				boolean updated = userStatus.update(textArea.getText());
 				if (updated) {
 					log.debug("Twitter status update correctly");
 					label.setText("Status updated!!!");
@@ -293,7 +291,8 @@ public class MainFrame extends JFrame {
 		JButton send = new JButton("Send Direct Message");
 		send.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				boolean sended = udm.sentDirectMessageTo(name.substring(name.indexOf("@") + 1, name.length()),
+				boolean sended = userDirectMessage.sentDirectMessageTo(
+						name.substring(name.indexOf("@") + 1, name.length()),
 						textArea.getText());
 				if (sended) {
 					log.debug("Direct Message sended");
@@ -334,9 +333,9 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 
-		LinkedHashSet<Friend> friendList = fl.getFriendList();
+		LinkedHashSet<Friend> listOfFriends = friendList.getFriendList();
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
-		for (Friend f : friendList) {
+		for (Friend f : listOfFriends) {
 			dlm.addElement(f.getName() + " " + "@" + f.getScreenName());
 		}
 		final JList<String> list = new JList<String>(dlm);
@@ -391,7 +390,7 @@ public class MainFrame extends JFrame {
 
 		deleteFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				fl.deleteFriend(list.getSelectedValue());
+				friendList.deleteFriend(list.getSelectedValue());
 				panelTwo.removeAll();
 				createFriendPanel();
 			}
@@ -399,7 +398,7 @@ public class MainFrame extends JFrame {
 
 		addFriend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				fl.addFriend(textField.getText().trim());
+				friendList.addFriend(textField.getText().trim());
 				panelTwo.removeAll();
 				createFriendPanel();
 				errorLabel.setText("Friend is added!");
@@ -417,7 +416,7 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateContainerGaps(true);
 		panelTwo.setLayout(layout);
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
-		for (String s : udm.conversationsList()) {
+		for (String s : userDirectMessage.conversationsList()) {
 			dlm.addElement(s);
 		}
 		final JList<String> nameList = new JList<String>(dlm);
@@ -430,7 +429,6 @@ public class MainFrame extends JFrame {
 				.addComponent(scrollPane));
 		nameList.addMouseListener(new MouseListener() {
 
-			
 			public void mouseClicked(MouseEvent arg0) {
 				if (arg0.getButton() == MouseEvent.BUTTON1) {
 					panelTwo.removeAll();
@@ -439,25 +437,21 @@ public class MainFrame extends JFrame {
 
 			}
 
-		
 			public void mouseEntered(MouseEvent arg0) {
 				//no code
 
 			}
 
-			
 			public void mouseExited(MouseEvent arg0) {
 				//no code
 
 			}
 
-			
 			public void mousePressed(MouseEvent arg0) {
 				//no code
 
 			}
 
-			
 			public void mouseReleased(MouseEvent arg0) {
 				//no code
 
@@ -478,7 +472,7 @@ public class MainFrame extends JFrame {
 		JPanel container = new JPanel();
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
-		LinkedList<Conversation> conv = udm.setConversationMessages(name);
+		LinkedList<Conversation> conv = userDirectMessage.setConversationMessages(name);
 		for (Conversation c : conv) {
 			JPanel panel = new JPanel();
 			panel.setBorder(BorderFactory.createEtchedBorder());
@@ -535,9 +529,8 @@ public class MainFrame extends JFrame {
 		JButton messageButton = new JButton("Send Message");
 		messageButton.addActionListener(new ActionListener() {
 
-			
 			public void actionPerformed(ActionEvent arg0) {
-				boolean sended = udm.sentDirectMessageTo(name, messageArea.getText());
+				boolean sended = userDirectMessage.sentDirectMessageTo(name, messageArea.getText());
 				if (sended) {
 					log.debug("Direct Message sended");
 					sendStatus.setText("Message sended");
@@ -554,7 +547,6 @@ public class MainFrame extends JFrame {
 		JButton backButton = new JButton("Back");
 		backButton.addActionListener(new ActionListener() {
 
-			
 			public void actionPerformed(ActionEvent arg0) {
 				panelTwo.removeAll();
 				createConversationsListPanel();
@@ -585,7 +577,7 @@ public class MainFrame extends JFrame {
 		JPanel container = new JPanel();
 		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(layout);
-		for (Tweets t : tl.getTimeLineList()) {
+		for (Tweets t : timeLine.getTimeLineList()) {
 			JPanel panel = new JPanel();
 			BorderLayout panelLayout = new BorderLayout();
 			panel.setBackground(Color.GRAY);
@@ -676,10 +668,10 @@ public class MainFrame extends JFrame {
 
 		@Override
 		protected Object doInBackground() throws Exception {
-			tl.setTimeLineList();
+			timeLine.setTimeLineList();
 			log.debug("Time Line has been updated");
-			udm.setSent();
-			udm.setRecieved();
+			userDirectMessage.setSent();
+			userDirectMessage.setRecieved();
 			return null;
 		}
 
@@ -713,7 +705,6 @@ public class MainFrame extends JFrame {
 			this.textArea = ta;
 		}
 
-	
 		public void mouseClicked(MouseEvent me) {
 			int x = me.getX();
 			int y = me.getY();
@@ -746,25 +737,21 @@ public class MainFrame extends JFrame {
 			}
 		}
 
-		
 		public void mouseEntered(MouseEvent arg0) {
 			//no code
 
 		}
 
-		
 		public void mouseExited(MouseEvent arg0) {
 			//no code
 
 		}
 
-		
 		public void mousePressed(MouseEvent arg0) {
 			//no code
 
 		}
 
-		
 		public void mouseReleased(MouseEvent arg0) {
 			//no code
 
@@ -780,7 +767,6 @@ public class MainFrame extends JFrame {
 
 		}
 
-		
 		public void mouseClicked(MouseEvent me) {
 			boolean goInto = true;
 			int x = me.getX();
@@ -827,25 +813,21 @@ public class MainFrame extends JFrame {
 			}
 		}
 
-		
 		public void mouseEntered(MouseEvent e) {
 			//no code
 
 		}
 
-		
 		public void mouseExited(MouseEvent e) {
 			//no code
 
 		}
 
-	
 		public void mousePressed(MouseEvent e) {
 			//no code
 
 		}
 
-		
 		public void mouseReleased(MouseEvent e) {
 			//no code
 

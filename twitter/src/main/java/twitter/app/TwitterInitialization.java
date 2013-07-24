@@ -3,19 +3,19 @@ package twitter.app;
 import twitter4j.Twitter;
 
 class TwitterInitialization {
-	private FriendList fl;
-	private UserDirectMessage udm;
-	private UserStatus us;
-	private TimeLine tlu;
+	private FriendList friendList;
+	private UserDirectMessage userDirectMessage;
+	private UserStatus userStatus;
+	private TimeLine timeLine;
 	private Twitter twitter;
 
 	TwitterInitialization(Twitter t) {
 		if (t != null) {
 			this.twitter = t;
-			fl = new FriendList(twitter);
-			udm = new UserDirectMessage(twitter);
-			us = new UserStatus(twitter);
-			tlu = new TimeLine(twitter);
+			friendList = new FriendList(twitter);
+			userDirectMessage = new UserDirectMessage(twitter);
+			userStatus = new UserStatus(twitter);
+			timeLine = new TimeLine(twitter);
 		}
 		else {
 			throw new IllegalArgumentException("Parametr t should not be null or empty. Current value is " + t);
@@ -23,15 +23,15 @@ class TwitterInitialization {
 	}
 
 	public FriendList getFl() {
-		return fl;
+		return friendList;
 	}
 
 	public UserDirectMessage getUdm() {
-		return udm;
+		return userDirectMessage;
 	}
 
 	public UserStatus getUs() {
-		return us;
+		return userStatus;
 	}
 
 	public Twitter getTwitter() {
@@ -39,7 +39,7 @@ class TwitterInitialization {
 	}
 
 	public TimeLine getTlu() {
-		return tlu;
+		return timeLine;
 	}
 
 }

@@ -19,7 +19,7 @@ import twitter4j.User;
 import twitter4j.internal.logging.Logger;
 
 public class FriendList {
-	private final String friendListFileLocation = "target/classes/FriendList.txt";
+	private final String friendListFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(FriendList.class.getClass());
 	private Twitter twitter;
 	private LinkedHashSet<Friend> friendList = new LinkedHashSet<Friend>();
@@ -120,9 +120,11 @@ public class FriendList {
 	}
 
 	private void createFriendListFile() {
+		File userDir = new File(friendListFileLocation);
+		userDir.mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(friendListFileLocation));
+			pw = new PrintWriter(new FileOutputStream(userDir + "/FriendList.txt"));
 			for (Friend f : friendList) {
 				pw.println(f.getId() + " " + f.getName() + "@" + f.getScreenName());
 			}
@@ -138,7 +140,7 @@ public class FriendList {
 	private void readFriendListFile() {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(friendListFileLocation));
+			br = new BufferedReader(new FileReader(friendListFileLocation + "/FriendList.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

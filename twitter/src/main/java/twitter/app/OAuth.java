@@ -1,5 +1,6 @@
 package twitter.app;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
@@ -15,7 +16,7 @@ import twitter4j.auth.RequestToken;
 public class OAuth {
 	private final String consumerKey = "QrLV7P1izPRAP5YwktX0g";
 	private final String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
-	private final String propertiesLocation = "target/classes/twitter4j.properties";
+	private String userHomeDir = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(OAuth.class);
 	private String access;
 	private String accessTokenSecret;
@@ -71,9 +72,11 @@ public class OAuth {
 	}
 
 	public void print(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
+		File userDir = new File(userHomeDir);
+		userDir.mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(propertiesLocation));
+			pw = new PrintWriter(new FileOutputStream(userDir + "/twitter4j.properties"));
 			pw.println("debug=false");
 			pw.println("oauth.consumerKey=" + consumerKey);
 			pw.println("oauth.consumerSecret=" + consumerSecret);
