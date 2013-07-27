@@ -1,12 +1,17 @@
 package twitter.app;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
+import twitter.app.TimeLine.Tweets;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -17,7 +22,7 @@ public class OAuth {
 	private final String consumerKey = "QrLV7P1izPRAP5YwktX0g";
 	private final String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
 	private String userHomeDir = System.getProperty("user.home") + "/TwitterApplication";
-	private Logger log = Logger.getLogger(OAuth.class);
+	private Logger log = Logger.getLogger(getClass());
 	private String access;
 	private String accessTokenSecret;
 	private RequestToken requestToken;
@@ -27,6 +32,10 @@ public class OAuth {
 	public OAuth(Twitter twitter) {
 		this.twitter = twitter;
 		this.twitter.setOAuthConsumer(consumerKey, consumerSecret);
+	}
+
+	public OAuth() {
+
 	}
 
 	public String getOAuthAuthorizationURL() {
@@ -51,7 +60,7 @@ public class OAuth {
 			}
 			access = accessToken.getToken();
 			accessTokenSecret = accessToken.getTokenSecret();
-			print(consumerKey, consumerSecret, access, accessTokenSecret);
+			printProperties(consumerKey, consumerSecret, access, accessTokenSecret);
 
 		} catch (TwitterException te) {
 			log.error("Unable to get the access token +" + te.getStatusCode() + " ", te);
@@ -71,7 +80,7 @@ public class OAuth {
 		return complit;
 	}
 
-	public void print(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
+	public void printProperties(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
 		File userDir = new File(userHomeDir);
 		userDir.mkdirs();
 		PrintWriter pw = null;

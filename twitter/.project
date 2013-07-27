@@ -26,21 +26,4 @@
 		<nature>org.eclipse.m2e.core.maven2Nature</nature>
 		<nature>net.sf.eclipsecs.core.CheckstyleNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>User_Files</name>
-			<type>2</type>
-			<locationURI>User_Files</locationURI>
-		</link>
-	</linkedResources>
-	<variableList>
-		<variable>
-			<name>Files</name>
-			<value>file:/C:/Users/Anton/TwitterApplication</value>
-		</variable>
-		<variable>
-			<name>User_Files</name>
-			<value>$%7BFiles%7D</value>
-		</variable>
-	</variableList>
 </projectDescription>

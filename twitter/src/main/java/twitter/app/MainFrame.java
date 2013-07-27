@@ -51,7 +51,7 @@ import twitter.app.UserDirectMessage.Conversation;
 import twitter4j.internal.logging.Logger;
 
 public class MainFrame extends JFrame {
-	private final String imageLocation = "target/classes/image.jpg";
+	private final String imageLocation = "/image.jpg";
 	private Logger log = Logger.getLogger(getClass());
 	private int screenWidth;
 	private int screenHeight;
@@ -215,9 +215,9 @@ public class MainFrame extends JFrame {
 		panelTwo.setName("emptyPanel");
 		log.debug(panelTwo.getName());
 		panelTwo.setLayout(new BorderLayout());
-		ImageIcon icon = new ImageIcon(imageLocation);
+		ImageIcon image = new ImageIcon(this.getClass().getResource(imageLocation));
 		JLabel label = new JLabel();
-		label.setIcon(icon);
+		label.setIcon(image);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		panelTwo.add(BorderLayout.CENTER, label);
 	}
