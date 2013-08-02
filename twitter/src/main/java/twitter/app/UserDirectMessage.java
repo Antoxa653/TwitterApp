@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 
 import twitter4j.DirectMessage;
@@ -30,7 +31,7 @@ public class UserDirectMessage {
 	private Twitter twitter;
 	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
 	private LinkedList<SentMessage> sent = new LinkedList<SentMessage>();
-	private LinkedList<Conversation> conv = new LinkedList<Conversation>();
+	private List<Conversation> conv = new LinkedList<Conversation>();
 	private RateLimitationChecker rl;
 
 	UserDirectMessage(Twitter t) {
@@ -121,7 +122,7 @@ public class UserDirectMessage {
 		return list;
 	}
 
-	public LinkedList<Conversation> setConversationMessages(String name) {
+	public List<Conversation> setConversationMessages(String name) {
 		conv.clear();
 		for (RecievedMessage rm : recieved) {
 			if (rm.getSenderName().equals(name)) {

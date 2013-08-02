@@ -51,12 +51,8 @@ public class OAuthFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		final OAuth oa = new OAuth(twitter);
-		String urlString = oa.getOAuthAuthorizationURL();
-		try {
-			url = new URL(urlString);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+		setOAuthAuthorizationURL(oa);
+
 		getContentPane().setBackground(Color.WHITE);
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
@@ -76,7 +72,7 @@ public class OAuthFrame extends JFrame {
 		urlArea.setLineWrap(true);
 		urlArea.setForeground(Color.BLUE);
 		urlArea.setFont(font);
-		urlArea.setText(urlString);
+		urlArea.setText(url.toString());
 
 		JLabel pinLabel = new JLabel("Enter the received PIN code here:");
 		pinTextField = new JTextField();
@@ -143,7 +139,7 @@ public class OAuthFrame extends JFrame {
 			public void actionPerformed(ActionEvent arg0) {
 				dispose();
 				ResourceFilesChecker resource = new ResourceFilesChecker();
-				if (oa.spellCheckPIN(pinTextField.getText()) && oa.OAuthSetup(pinTextField.getText())
+				if (spellCheckPIN() && oa.OAuthSetup(pinTextField.getText())
 						&& resource.isTwitterPropertiesFileExist()) {
 					log.info("PIN spellcheck passed");
 					EventQueue.invokeLater(new Runnable() {
@@ -196,6 +192,26 @@ public class OAuthFrame extends JFrame {
 		});
 	}
 
+	private void setOAuthAuthorizationURL(OAuth oa) {
+		String urlString = oa.getOAuthAuthorizationURL();
+		try {
+			url = new URL(urlString);
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public boolean spellCheckPIN() {
+		boolean complit = true;
+		try {
+			int num = Integer.parseInt(pinTextField.getText());
+		} catch (NumberFormatException e) {
+			log.error("Bad number format");
+			complit = false;
+		}
+		return complit;
+	}
+
 	private class PopupMenu extends JPopupMenu {
 		private JMenuItem paste;
 		private String pin;
@@ -234,7 +250,6 @@ public class OAuthFrame extends JFrame {
 					clipboardText = (String) trans.getTransferData(DataFlavor.stringFlavor);
 				} catch (UnsupportedFlavorException e) {
 					log.error("UnsupportedFlavorException occurs while geting String from clipboard", e);
-					e.printStackTrace();
 				} catch (IOException e) {
 					log.error("IOException:", e);
 

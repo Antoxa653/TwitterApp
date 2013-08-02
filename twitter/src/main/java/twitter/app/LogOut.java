@@ -12,9 +12,10 @@ public class LogOut {
 		if (resource.isTwitterPropertiesFileExist() & resource.isFriendListFileExist()) {
 			resource.twitterPropertiesFileDelete();
 			resource.friendListFileDelete();
-			if (resource.isSentMessagesFileExist() & resource.isRecievedMessagesFileExist()) {
+			if (resource.isSentMessagesFileExist() & resource.isRecievedMessagesFileExist() & resource.isTimeLineFileExist()) {
 				resource.sentMessagesFileDelete();
 				resource.recievedMessagesFileDelete();
+				resource.timeLineFileDelete();
 			}
 			System.exit(0);
 		}

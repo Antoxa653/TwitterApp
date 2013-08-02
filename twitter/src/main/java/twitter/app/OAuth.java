@@ -69,16 +69,7 @@ public class OAuth {
 		return complit;
 	}
 
-	public boolean spellCheckPIN(String pin) {
-		boolean complit = true;
-		try {
-			int num = Integer.parseInt(pin);
-		} catch (NumberFormatException e) {
-			log.error("Bad number format");
-			complit = false;
-		}
-		return complit;
-	}
+	
 
 	public void printProperties(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
 		File userDir = new File(userHomeDir);

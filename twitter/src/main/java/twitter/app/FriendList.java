@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.Set;
+
 import twitter4j.ResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -22,7 +24,7 @@ public class FriendList {
 	private final String friendListFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(FriendList.class.getClass());
 	private Twitter twitter;
-	private LinkedHashSet<Friend> friendList = new LinkedHashSet<Friend>();
+	private Set<Friend> friendList = new LinkedHashSet<Friend>();
 
 	public FriendList(Twitter twitter) {
 		this.twitter = twitter;
@@ -37,7 +39,7 @@ public class FriendList {
 		}
 	}
 
-	public LinkedHashSet<Friend> getFriendList() {
+	public Set<Friend> getFriendList() {
 		return friendList;
 	}
 

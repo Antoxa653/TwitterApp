@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -16,16 +15,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.GroupLayout;
-import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -47,7 +45,6 @@ import javax.swing.text.DefaultCaret;
 import twitter.app.FriendList.Friend;
 import twitter.app.TimeLine.Tweets;
 import twitter.app.UserDirectMessage.Conversation;
-
 import twitter4j.internal.logging.Logger;
 
 public class MainFrame extends JFrame {
@@ -62,7 +59,8 @@ public class MainFrame extends JFrame {
 	private UserDirectMessage userDirectMessage;
 	private UserStatus userStatus;
 	private TimeLine timeLine;
-	private AutoUpdate autoUpdate;
+	private MainFrameDataUpdateTimer dataUpdateTimer;
+
 	private String currentName;
 
 	MainFrame(TwitterInitialization ti) {
@@ -83,28 +81,24 @@ public class MainFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setBackground(Color.WHITE);
 
-		buttonPanel = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, screenHeight / 16));
-		panelTwo = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, 7 * screenHeight / 16));
-		timeLinePanel = createPreferredSizePanel(Color.WHITE, new Dimension(screenWidth / 4, screenHeight / 2));
-
+		buttonPanel = createPreferredSizePanel(new Dimension(screenWidth / 4, screenHeight / 16));
 		buttonPanel.setBorder(BorderFactory.createEtchedBorder());
+		buttonPanel.setBackground(Color.WHITE);
+		panelTwo = createPreferredSizePanel(new Dimension(screenWidth / 4, 7 * screenHeight / 16));
 		panelTwo.setBorder(BorderFactory.createEtchedBorder());
+		panelTwo.setBackground(Color.WHITE);
+		timeLinePanel = createPreferredSizePanel(new Dimension(screenWidth / 4, screenHeight / 2));
 		timeLinePanel.setBorder(BorderFactory.createEtchedBorder());
+		timeLinePanel.setBackground(Color.WHITE);
+
 		timeLinePanel.setName("null");
 
 		createMenuBar();
 		createButtonPanel();
 		createPanelWithLogo();
 
-		Timer t = new Timer(true);
-		t.schedule(new TimerTask() {
-			@Override
-			public void run() {
-				log.debug("Time Line Updating...");
-				autoUpdate = new AutoUpdate();
-				autoUpdate.execute();
-			}
-		}, 0, 180000);
+		dataUpdateTimer = new MainFrameDataUpdateTimer();
+		dataUpdateTimer.timerInit();
 
 		GroupLayout layout = new GroupLayout(getContentPane());
 		getContentPane().setLayout(layout);
@@ -127,6 +121,14 @@ public class MainFrame extends JFrame {
 						.addComponent(timeLinePanel)));
 	}
 
+	public String getCurrentName() {
+		return currentName;
+	}
+
+	private void setCurrentName(String name) {
+		currentName = name;
+	}
+
 	private void createMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu menu = new JMenu("Menu");
@@ -145,20 +147,21 @@ public class MainFrame extends JFrame {
 				logout.doLogout();
 			}
 		});
-		exit.addActionListener(new ActionListener() {
 
+		exit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				dispose();
-				if (autoUpdate.getState() == SwingWorker.StateValue.STARTED) {
+				if (dataUpdateTimer.isWorking) {
 					do {
 
 					}
-					while (autoUpdate.getState() == SwingWorker.StateValue.DONE);
+					while (!dataUpdateTimer.isWorking);
 				}
 				System.exit(0);
 
 			}
 		});
+
 	}
 
 	private void createButtonPanel() {
@@ -248,7 +251,7 @@ public class MainFrame extends JFrame {
 					label.setText("Status updated!!!");
 					label.setVisible(true);
 				}
-				if (!updated) {
+				else {
 					log.debug("Twitter status has not been updated ");
 					label.setText("An erros has occurred");
 					label.setVisible(true);
@@ -291,15 +294,15 @@ public class MainFrame extends JFrame {
 		JButton send = new JButton("Send Direct Message");
 		send.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				boolean sended = userDirectMessage.sentDirectMessageTo(
+				boolean isSent = userDirectMessage.sentDirectMessageTo(
 						name.substring(name.indexOf("@") + 1, name.length()),
 						textArea.getText());
-				if (sended) {
+				if (isSent) {
 					log.debug("Direct Message sended");
 					sendStatus.setText("Message sended");
 					sendStatus.setVisible(true);
 				}
-				if (!sended) {
+				else {
 					log.debug("Direct Message not sended");
 					sendStatus.setText("Message not sended");
 					sendStatus.setVisible(true);
@@ -333,7 +336,7 @@ public class MainFrame extends JFrame {
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 
-		LinkedHashSet<Friend> listOfFriends = friendList.getFriendList();
+		Set<Friend> listOfFriends = friendList.getFriendList();
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
 		for (Friend f : listOfFriends) {
 			dlm.addElement(f.getName() + " " + "@" + f.getScreenName());
@@ -472,31 +475,9 @@ public class MainFrame extends JFrame {
 		JPanel container = new JPanel();
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
-		LinkedList<Conversation> conv = userDirectMessage.setConversationMessages(name);
+		List<Conversation> conv = userDirectMessage.setConversationMessages(name);
 		for (Conversation c : conv) {
-			JPanel panel = new JPanel();
-			panel.setBorder(BorderFactory.createEtchedBorder());
-			JLabel label = new JLabel();
-			JTextArea textArea = new JTextArea();
-			BorderLayout panelLayout = new BorderLayout();
-			panel.setLayout(panelLayout);
-			DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-			String dateTime = dateFormat.format(c.getDate());
-			label.setText(dateTime);
-			textArea.setBorder(BorderFactory.createEtchedBorder());
-			textArea.setWrapStyleWord(true);
-			textArea.setLineWrap(true);
-			textArea.setEditable(false);
-			textArea.setText(c.getText());
-			panel.add(textArea, BorderLayout.WEST);
-			panel.add(label, BorderLayout.CENTER);
-			if (c.isSent()) {
-				textArea.setBackground(Color.YELLOW);
-			}
-			else {
-				textArea.setBackground(Color.LIGHT_GRAY);
-			}
-			container.add(panel);
+			container.add(conversationMessagesPanel(c));
 		}
 
 		JScrollPane containerScrollPane = new JScrollPane(container);
@@ -570,6 +551,33 @@ public class MainFrame extends JFrame {
 		return name;
 	}
 
+	private JPanel conversationMessagesPanel(Conversation c) {
+		JPanel panel = new JPanel();
+		panel.setBorder(BorderFactory.createEtchedBorder());
+		JLabel label = new JLabel();
+		JTextArea textArea = new JTextArea();
+		BorderLayout panelLayout = new BorderLayout();
+		panel.setLayout(panelLayout);
+		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		String dateTime = dateFormat.format(c.getDate());
+		label.setText(dateTime);
+		textArea.setBorder(BorderFactory.createEtchedBorder());
+		textArea.setWrapStyleWord(true);
+		textArea.setLineWrap(true);
+		textArea.setEditable(false);
+		textArea.setText(c.getText());
+		panel.add(textArea, BorderLayout.WEST);
+		panel.add(label, BorderLayout.CENTER);
+		if (c.isSent()) {
+			textArea.setBackground(Color.YELLOW);
+		}
+		else {
+			textArea.setBackground(Color.LIGHT_GRAY);
+		}
+		return panel;
+
+	}
+
 	private void createHomeTimeLinePanel() {
 		timeLinePanel.setName("homeTimeLine");
 		log.debug(timeLinePanel.getName());
@@ -594,7 +602,7 @@ public class MainFrame extends JFrame {
 			textArea.setWrapStyleWord(true);
 			textArea.setLineWrap(true);
 
-			textArea.addMouseListener(new ShowUrlFromTimeLine(textArea));
+			textArea.addMouseListener(new UrlFromMessages(textArea));
 
 			panel.add(textArea, BorderLayout.CENTER);
 			panel.add(label, BorderLayout.NORTH);
@@ -646,125 +654,89 @@ public class MainFrame extends JFrame {
 
 		});
 
-		textArea.addMouseListener(new ShowUrl(textArea));
+		textArea.addMouseListener(new UrlFromMessages(textArea));
 	}
 
-	private String getCurrentName() {
-		return currentName;
+	public void repaintPanelTwo() {
+		panelTwo.repaint();
+		panelTwo.revalidate();
 	}
 
-	private void setCurrentName(String currentName) {
-		this.currentName = currentName;
+	public void repaintTimeLinePanel() {
+		timeLinePanel.repaint();
+		timeLinePanel.revalidate();
 	}
 
-	private JPanel createPreferredSizePanel(Color color, Dimension dimension) {
+	private JPanel createPreferredSizePanel(Dimension dimension) {
 		JPanel panel = new JPanel();
-		panel.setBackground(color);
 		panel.setPreferredSize(dimension);
 		return panel;
 	}
 
-	private class AutoUpdate extends SwingWorker<Object, Object> {
+	private class MainFrameDataUpdateTimer {
+		private Logger log = Logger.getLogger(getClass());
+		private int updateTimeDelay = 180000;
+		private Timer timer;
+		private boolean isWorking = false;
 
-		@Override
-		protected Object doInBackground() throws Exception {
-			timeLine.setTimeLineList();
-			log.debug("Time Line has been updated");
-			userDirectMessage.setSent();
-			userDirectMessage.setRecieved();
-			return null;
+		MainFrameDataUpdateTimer() {
+			timer = new Timer(true);
 		}
 
-		@Override
-		protected void done() {
-			if ("null".equals(timeLinePanel.getName()) | "homeTimeLine".equals(timeLinePanel.getName())) {
-				timeLinePanel.removeAll();
-				createHomeTimeLinePanel();
-				timeLinePanel.repaint();
-				timeLinePanel.revalidate();
-			}
-			if ("conversationsList".equals(panelTwo.getName())) {
-				panelTwo.removeAll();
-				createConversationsListPanel();
-				panelTwo.repaint();
-				panelTwo.revalidate();
-			}
-			if ("internalConversation".equals(panelTwo.getName())) {
-				panelTwo.removeAll();
-				createInternalConversationPanel(getCurrentName());
-				panelTwo.repaint();
-				panelTwo.revalidate();
-			}
-		}
-	}
-
-	private final class ShowUrl implements MouseListener {
-		private JTextArea textArea;
-
-		private ShowUrl(JTextArea ta) {
-			this.textArea = ta;
-		}
-
-		public void mouseClicked(MouseEvent me) {
-			int x = me.getX();
-			int y = me.getY();
-			String text = textArea.getText();
-			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regexWord = "(\\s{1})|(\\).)";
-			int startOffset = textArea.viewToModel(new Point(x, y));
-			String[] array = text.split(regexWord);
-			for (String s : array) {
-				if (s.matches(regexUrl)) {
-					int start = text.indexOf(s);
-					int finish = start + s.length();
-					if (start <= startOffset & startOffset <= finish) {
-						Desktop desktop = Desktop.getDesktop();
-						if (desktop.isSupported(Desktop.Action.BROWSE)) {
-							try {
-								String urlString = s;
-								URL url = new URL(urlString);
-								desktop.browse(url.toURI());
-								break;
-							} catch (IOException e) {
-								log.error("IOException", e);
-								e.printStackTrace();
-							} catch (URISyntaxException e) {
-								log.error("URISyntaxExceptin :", e);
-							}
-						}
-					}
+		public void timerInit() {
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					log.debug("Time Line Updating...");
+					AutoUpdate autoUpdate = new AutoUpdate();
+					autoUpdate.execute();
 				}
+			}, 0, updateTimeDelay);
+		}
+
+		private class AutoUpdate extends SwingWorker<Object, Object> {
+
+			@Override
+			protected Object doInBackground() throws Exception {
+				isWorking = true;
+				timeLine.setTimeLineList();
+				log.debug("Time Line has been updated");
+				userDirectMessage.setSent();
+				userDirectMessage.setRecieved();
+				return null;
+			}
+
+			@Override
+			protected void done() {
+				isWorking = false;
+				if ("null".equals(timeLinePanel.getName()) | "homeTimeLine".equals(timeLinePanel.getName())) {
+					timeLinePanel.removeAll();
+					createHomeTimeLinePanel();
+					timeLinePanel.repaint();
+					timeLinePanel.revalidate();
+				}
+				if ("conversationsList".equals(panelTwo.getName())) {
+					panelTwo.removeAll();
+					createConversationsListPanel();
+					panelTwo.repaint();
+					panelTwo.revalidate();
+				}
+				if ("internalConversation".equals(panelTwo.getName())) {
+					panelTwo.removeAll();
+					createInternalConversationPanel(getCurrentName());
+					panelTwo.repaint();
+					panelTwo.revalidate();
+				}
+
 			}
 		}
-
-		public void mouseEntered(MouseEvent arg0) {
-			//no code
-
-		}
-
-		public void mouseExited(MouseEvent arg0) {
-			//no code
-
-		}
-
-		public void mousePressed(MouseEvent arg0) {
-			//no code
-
-		}
-
-		public void mouseReleased(MouseEvent arg0) {
-			//no code
-
-		}
-
 	}
 
-	private final class ShowUrlFromTimeLine implements MouseListener {
+	private final class UrlFromMessages implements MouseListener {
 		private JTextArea textArea;
 
-		private ShowUrlFromTimeLine(JTextArea ta) {
+		private UrlFromMessages(JTextArea ta) {
 			this.textArea = ta;
-
 		}
 
 		public void mouseClicked(MouseEvent me) {
@@ -791,18 +763,18 @@ public class MainFrame extends JFrame {
 								break;
 							} catch (IOException e) {
 								log.error("IOException", e);
+								e.printStackTrace();
 							} catch (URISyntaxException e) {
 								log.error("URISyntaxExceptin :", e);
 							}
 						}
 					}
-					else {
+					else if ("homeTimeLine".equals(timeLinePanel.getName())) {
 						timeLinePanel.removeAll();
 						createInternaHomeTimeLinelPanel(textArea.getText());
 						timeLinePanel.revalidate();
 						timeLinePanel.repaint();
 					}
-
 				}
 			}
 			if (goInto) {
@@ -811,27 +783,29 @@ public class MainFrame extends JFrame {
 				timeLinePanel.revalidate();
 				timeLinePanel.repaint();
 			}
+
 		}
 
-		public void mouseEntered(MouseEvent e) {
+		public void mouseEntered(MouseEvent arg0) {
 			//no code
 
 		}
 
-		public void mouseExited(MouseEvent e) {
+		public void mouseExited(MouseEvent arg0) {
 			//no code
 
 		}
 
-		public void mousePressed(MouseEvent e) {
+		public void mousePressed(MouseEvent arg0) {
 			//no code
 
 		}
 
-		public void mouseReleased(MouseEvent e) {
+		public void mouseReleased(MouseEvent arg0) {
 			//no code
 
 		}
+
 	}
 
 }
