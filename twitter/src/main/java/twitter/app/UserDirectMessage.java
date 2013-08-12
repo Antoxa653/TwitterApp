@@ -17,6 +17,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import twitter4j.DirectMessage;
 import twitter4j.ResponseList;
@@ -111,8 +112,8 @@ public class UserDirectMessage {
 		return sent;
 	}
 
-	public LinkedHashSet<String> conversationsList() {
-		LinkedHashSet<String> list = new LinkedHashSet<String>();
+	public Set<String> conversationsList() {
+		Set<String> list = new LinkedHashSet<String>();
 		for (RecievedMessage rm : recieved) {
 			list.add(rm.getSenderName());
 		}
