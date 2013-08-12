@@ -1,20 +1,14 @@
 package twitter.app;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.LinkedList;
 
 import org.apache.log4j.Logger;
 
-import twitter.app.TimeLine.Tweets;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
@@ -68,8 +62,6 @@ public class OAuth {
 		}
 		return complit;
 	}
-
-	
 
 	public void printProperties(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
 		File userDir = new File(userHomeDir);

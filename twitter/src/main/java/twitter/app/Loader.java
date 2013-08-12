@@ -1,8 +1,8 @@
 package twitter.app;
 
 import java.awt.EventQueue;
+
 import twitter4j.Twitter;
-import twitter4j.internal.logging.Logger;
 
 public class Loader {
 

@@ -30,6 +30,7 @@ public class TwitterResourcesInitialization extends SwingWorker<TwitterInitializ
 		log.debug("Initialization done");
 		try {
 			mainFrame = new MainFrame(get());
+			mainFrame.init();
 			mainFrame.setVisible(true);
 		} catch (InterruptedException e) {
 			log.error("Thread is interrupted before or during the activity", e);

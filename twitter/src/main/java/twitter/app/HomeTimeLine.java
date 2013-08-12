@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import java.util.LinkedList;
 import java.util.List;
 
@@ -16,18 +15,19 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.internal.logging.Logger;
 
-public class TimeLine {
+public class HomeTimeLine {
 	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
-	private LinkedList<Tweets> timeLineList = new LinkedList<Tweets>();;
+	private List<Tweets> timeLineList = new LinkedList<Tweets>();
 	private RateLimitationChecker rateLimatation;
 
-	public TimeLine(Twitter twitter) {
+	public HomeTimeLine(Twitter twitter) {
 		this.twitter = twitter;
+
 	}
 
-	public LinkedList<Tweets> getTimeLineList() {
+	public List<Tweets> getTimeLineList() {
 		return timeLineList;
 	}
 
@@ -40,6 +40,7 @@ public class TimeLine {
 				List<Status> statusList = twitter.getHomeTimeline();
 				for (Status status : statusList) {
 					timeLineList.add(new Tweets(status.getId(), status.getUser().getScreenName(), status.getText()));
+
 				}
 			} catch (TwitterException e) {
 				log.error("Error while updating timeline" + e.getStatusCode() + " " + e);
@@ -53,6 +54,7 @@ public class TimeLine {
 			log.debug("TimeLine readed from the file TimeLine.txt");
 			readTimeLineFile();
 		}
+
 	}
 
 	public void createTimeLineFile() {

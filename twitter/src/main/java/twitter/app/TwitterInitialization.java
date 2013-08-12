@@ -6,7 +6,7 @@ class TwitterInitialization {
 	private FriendList friendList;
 	private UserDirectMessage userDirectMessage;
 	private UserStatus userStatus;
-	private TimeLine timeLine;
+	private HomeTimeLine timeLine;
 	private Twitter twitter;
 
 	TwitterInitialization(Twitter t) {
@@ -15,7 +15,7 @@ class TwitterInitialization {
 			friendList = new FriendList(twitter);
 			userDirectMessage = new UserDirectMessage(twitter);
 			userStatus = new UserStatus(twitter);
-			timeLine = new TimeLine(twitter);
+			timeLine = new HomeTimeLine(twitter);
 		}
 		else {
 			throw new IllegalArgumentException("Parametr t should not be null or empty. Current value is " + t);
@@ -38,7 +38,7 @@ class TwitterInitialization {
 		return twitter;
 	}
 
-	public TimeLine getTlu() {
+	public HomeTimeLine getTlu() {
 		return timeLine;
 	}
 

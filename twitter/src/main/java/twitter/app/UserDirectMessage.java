@@ -29,8 +29,8 @@ public class UserDirectMessage {
 	private final String recievedMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
-	private LinkedList<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
-	private LinkedList<SentMessage> sent = new LinkedList<SentMessage>();
+	private List<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
+	private List<SentMessage> sent = new LinkedList<SentMessage>();
 	private List<Conversation> conv = new LinkedList<Conversation>();
 	private RateLimitationChecker rl;
 
@@ -38,11 +38,11 @@ public class UserDirectMessage {
 		this.twitter = t;
 	}
 
-	public LinkedList<RecievedMessage> getRecieved() {
+	public List<RecievedMessage> getRecieved() {
 		return recieved;
 	}
 
-	public LinkedList<SentMessage> getSent() {
+	public List<SentMessage> getSent() {
 		return sent;
 	}
 
@@ -57,7 +57,7 @@ public class UserDirectMessage {
 		return complit;
 	}
 
-	public LinkedList<RecievedMessage> setRecieved() {
+	public List<RecievedMessage> setRecieved() {
 		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages");
 		if (rateLimit >= 2) {
@@ -83,7 +83,7 @@ public class UserDirectMessage {
 		return recieved;
 	}
 
-	public LinkedList<SentMessage> setSent() {
+	public List<SentMessage> setSent() {
 		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages/sent");
 		if (rateLimit >= 2) {

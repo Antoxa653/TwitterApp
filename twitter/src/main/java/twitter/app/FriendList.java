@@ -7,10 +7,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -63,6 +60,8 @@ public class FriendList {
 	}
 
 	public void deleteFriend(String selectedFriend) {
+		File userDir = new File(friendListFileLocation);
+		userDir.mkdirs();
 		ResourceFilesChecker file = new ResourceFilesChecker();
 		boolean exist = file.isFriendListFileExist();
 		if (exist) {
@@ -75,7 +74,7 @@ public class FriendList {
 						break;
 					}
 				}
-				File friendListFile = new File("FriendList.txt");
+				File friendListFile = new File(userDir + "/FriendList.txt");
 				friendListFile.delete();
 				createFriendListFile();
 			} catch (TwitterException te) {
@@ -88,6 +87,8 @@ public class FriendList {
 	}
 
 	public void addFriend(String newFriendName) {
+		File userDir = new File(friendListFileLocation);
+		userDir.mkdirs();
 		ResourceFilesChecker file = new ResourceFilesChecker();
 		boolean exist = file.isFriendListFileExist();
 		if (exist) {
@@ -100,7 +101,7 @@ public class FriendList {
 				String friendName = twitter.showUser(friendsScreenName).getName();
 				friendList.add(new Friend(friendId, friendName, friendsScreenName));
 
-				pw = new PrintWriter(new FileOutputStream("FriendList.txt", true));
+				pw = new PrintWriter(new FileOutputStream(userDir + "/FriendList.txt", true));
 				pw.println(friendId + " " + friendName + "@" + friendsScreenName);
 			} catch (TwitterException te) {
 				log.error("Twitter Exception :" + te.getStatusCode(), te);
@@ -140,9 +141,11 @@ public class FriendList {
 	}
 
 	private void readFriendListFile() {
+		File userDir = new File(friendListFileLocation);
+		userDir.mkdirs();
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(friendListFileLocation + "/FriendList.txt"));
+			br = new BufferedReader(new FileReader(userDir + "/FriendList.txt"));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

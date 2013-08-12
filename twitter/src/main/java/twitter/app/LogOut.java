@@ -1,7 +1,5 @@
 package twitter.app;
 
-import java.io.File;
-
 import twitter4j.internal.logging.Logger;
 
 public class LogOut {

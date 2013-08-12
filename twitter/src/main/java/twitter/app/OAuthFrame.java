@@ -11,8 +11,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -106,7 +106,7 @@ public class OAuthFrame extends JFrame {
 				.addComponent(errorLabel)
 				);
 
-		pinTextField.addMouseListener(new MouseListener() {
+		pinTextField.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {
 				if (e.isMetaDown()) {
 					PopupMenu menu = new PopupMenu();
@@ -114,29 +114,10 @@ public class OAuthFrame extends JFrame {
 				}
 			}
 
-			public void mouseClicked(MouseEvent e) {
-				//no code
+		});
 
-			}
-
-			public void mouseEntered(MouseEvent e) {
-				//no code
-
-			}
-
-			public void mouseExited(MouseEvent e) {
-				//no code
-
-			}
-
-			public void mouseReleased(MouseEvent e) {
-				//no code
-			}
-		}
-				);
-
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
+		okButton.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent arg0) {
 				dispose();
 				ResourceFilesChecker resource = new ResourceFilesChecker();
 				if (spellCheckPIN() && oa.OAuthSetup(pinTextField.getText())
@@ -154,8 +135,8 @@ public class OAuthFrame extends JFrame {
 			}
 		});
 
-		urlArea.addMouseListener(new MouseListener() {
-			public void mouseClicked(MouseEvent arg0) {
+		urlArea.addMouseListener(new MouseAdapter() {
+			public void mousePressed(MouseEvent arg0) {
 				if (Desktop.isDesktopSupported()) {
 					Desktop desktop = Desktop.getDesktop();
 					if (desktop.isSupported(Desktop.Action.BROWSE))
@@ -170,25 +151,6 @@ public class OAuthFrame extends JFrame {
 				}
 			}
 
-			public void mouseEntered(MouseEvent arg0) {
-				//no code
-
-			}
-
-			public void mouseExited(MouseEvent arg0) {
-				//no code
-
-			}
-
-			public void mousePressed(MouseEvent arg0) {
-				//no code
-
-			}
-
-			public void mouseReleased(MouseEvent arg0) {
-				//no code
-
-			}
 		});
 	}
 
