@@ -39,26 +39,11 @@ public class UserDirectMessage {
 		this.twitter = t;
 	}
 
-	public List<RecievedMessage> getRecieved() {
+	public List<RecievedMessage> getRecievedMessagesList() {
 		return recieved;
 	}
 
-	public List<SentMessage> getSent() {
-		return sent;
-	}
-
-	public boolean sentDirectMessageTo(String name, String text) {
-		boolean complit = true;
-		try {
-			DirectMessage message = twitter.sendDirectMessage(twitter.showUser(name).getId(), text);
-		} catch (TwitterException e) {
-			log.error("Error while try sending direct message to friend: " + e.getStatusCode() + " " + e);
-			complit = false;
-		}
-		return complit;
-	}
-
-	public List<RecievedMessage> setRecieved() {
+	public void setRecievedMessagesList() {
 		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages");
 		if (rateLimit >= 2) {
@@ -77,14 +62,18 @@ public class UserDirectMessage {
 			log.debug("RecievedMessages.txt file created");
 			createRecievedMessagesFile();
 		}
-		if (rateLimit <= 1) {
+		if (rateLimit < 2) {
 			log.debug("RecievedMessages.txt file readeding...");
 			readRecievedMessagesFile();
 		}
-		return recieved;
+
 	}
 
-	public List<SentMessage> setSent() {
+	public List<SentMessage> getSentMessagesList() {
+		return sent;
+	}
+
+	public void setSentMessagesList() {
 		rl = new RateLimitationChecker(twitter);
 		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages/sent");
 		if (rateLimit >= 2) {
@@ -101,18 +90,28 @@ public class UserDirectMessage {
 			}
 		}
 		if (rateLimit == 2) {
-			log.debug("SentMessages file created");
 			createSentMessagesFile();
+			log.debug("SentMessages.txt file created");
 		}
-		if (rateLimit <= 1) {
-			log.debug("SentMessages file reading...");
+		if (rateLimit < 2) {
 			readSentMessagesFile();
+			log.debug("SentMessages file reading...");
 		}
 
-		return sent;
 	}
 
-	public Set<String> conversationsList() {
+	public boolean sentDirectMessageTo(String name, String text) {
+		boolean complit = true;
+		try {
+			DirectMessage message = twitter.sendDirectMessage(twitter.showUser(name).getId(), text);
+		} catch (TwitterException e) {
+			log.error("Error while try sending direct message to friend: " + e.getStatusCode() + " " + e);
+			complit = false;
+		}
+		return complit;
+	}
+
+	public Set<String> getConversationsMembersNamesList() {
 		Set<String> list = new LinkedHashSet<String>();
 		for (RecievedMessage rm : recieved) {
 			list.add(rm.getSenderName());
@@ -123,7 +122,7 @@ public class UserDirectMessage {
 		return list;
 	}
 
-	public List<Conversation> setConversationMessages(String name) {
+	private void setConversationMessages(String name) {
 		conv.clear();
 		for (RecievedMessage rm : recieved) {
 			if (rm.getSenderName().equals(name)) {
@@ -145,6 +144,10 @@ public class UserDirectMessage {
 				return o1.getDate().getTime() < o2.getDate().getTime() ? -1 : 1;
 			}
 		});
+	}
+
+	public List<Conversation> getConversationMessages(String name) {
+		setConversationMessages(name);
 		return conv;
 	}
 
@@ -152,10 +155,20 @@ public class UserDirectMessage {
 		File userDir = new File(sentMessagesFileLocation);
 		userDir.mkdirs();
 		PrintWriter pw = null;
+		StringBuilder sb = new StringBuilder();
 		try {
 			pw = new PrintWriter(new FileOutputStream(userDir + "/SentMessages.txt"));
 			for (SentMessage s : sent) {
-				pw.println(s.getId() + "@" + s.getRecipientName() + "(text)" + s.getText() + "(Date)" + s.getDate());
+				sb.append(s.getId());
+				sb.append("@");
+				sb.append(s.getRecipientName());
+				sb.append("(text)");
+				sb.append(s.getText());
+				sb.append("(Date)");
+				sb.append(s.getDate());
+				//pw.println(s.getId() + "@" + s.getRecipientName() + "(text)" + s.getText() + "(Date)" + s.getDate());
+				pw.println(sb.toString());
+				sb.setLength(0);
 			}
 		} catch (FileNotFoundException e) {
 			log.error("Error while try to create SentMessages.txt file", e);
@@ -167,7 +180,7 @@ public class UserDirectMessage {
 
 	}
 
-	public void readSentMessagesFile() {
+	private void readSentMessagesFile() {
 		sent.clear();
 		BufferedReader br = null;
 		try {
@@ -198,14 +211,24 @@ public class UserDirectMessage {
 		}
 	}
 
-	public void createRecievedMessagesFile() {
+	private void createRecievedMessagesFile() {
 		File userDir = new File(recievedMessagesFileLocation);
 		userDir.mkdirs();
 		PrintWriter pw = null;
+		StringBuilder sb = new StringBuilder();
 		try {
 			pw = new PrintWriter(new FileOutputStream(userDir + "/RecievedMessages.txt"));
 			for (RecievedMessage r : recieved) {
-				pw.println(r.getId() + "@" + r.getSenderName() + "(text)" + r.getText() + "(Date)" + r.getDate());
+				sb.append(r.getId());
+				sb.append("@");
+				sb.append(r.getSenderName());
+				sb.append("(text)");
+				sb.append(r.getText());
+				sb.append("(Date)");
+				sb.append(r.getDate());
+				//pw.println(r.getId() + "@" + r.getSenderName() + "(text)" + r.getText() + "(Date)" + r.getDate());
+				pw.println(sb.toString());
+				sb.setLength(0);
 			}
 		} catch (FileNotFoundException e) {
 			log.error("Error while creating RecievedMessages.txt file", e);
@@ -217,7 +240,7 @@ public class UserDirectMessage {
 
 	}
 
-	public void readRecievedMessagesFile() {
+	private void readRecievedMessagesFile() {
 		recieved.clear();
 		BufferedReader br = null;
 		try {

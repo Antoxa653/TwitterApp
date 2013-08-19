@@ -443,7 +443,7 @@ public class MainFrame extends JFrame {
 		JPanel conversationsListPanel = new JPanel();
 
 		DefaultListModel<String> dlm = new DefaultListModel<String>();
-		for (String s : userDirectMessage.conversationsList()) {
+		for (String s : userDirectMessage.getConversationsMembersNamesList()) {
 			dlm.addElement(s);
 		}
 		final JList<String> nameList = new JList<String>(dlm);
@@ -485,7 +485,7 @@ public class MainFrame extends JFrame {
 		JPanel container = new JPanel();
 		BoxLayout containerLayout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(containerLayout);
-		List<Conversation> conv = userDirectMessage.setConversationMessages(name);
+		List<Conversation> conv = userDirectMessage.getConversationMessages(name);
 		for (Conversation c : conv) {
 			container.add(conversationMessagesPanel(c));
 		}
@@ -731,10 +731,10 @@ public class MainFrame extends JFrame {
 			@Override
 			protected Object doInBackground() throws Exception {
 				isWorking = true;
+				userDirectMessage.setSentMessagesList();
+				userDirectMessage.setRecievedMessagesList();
 				timeLine.setTimeLineList();
 				log.debug("Time Line has been updated");
-				userDirectMessage.setSent();
-				userDirectMessage.setRecieved();
 				return null;
 			}
 

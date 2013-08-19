@@ -1,14 +1,12 @@
 package twitter.app;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import twitter4j.Status;
 import twitter4j.Twitter;
@@ -19,7 +17,7 @@ public class HomeTimeLine {
 	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication";
 	private Logger log = Logger.getLogger(getClass());
 	private Twitter twitter;
-	private List<Tweets> timeLineList = new LinkedList<Tweets>();
+	private List<Tweets> timeLineList = new ArrayList<Tweets>();
 	private RateLimitationChecker rateLimatation;
 
 	public HomeTimeLine(Twitter twitter) {
@@ -42,17 +40,18 @@ public class HomeTimeLine {
 					timeLineList.add(new Tweets(status.getId(), status.getUser().getScreenName(), status.getText()));
 
 				}
+
 			} catch (TwitterException e) {
 				log.error("Error while updating timeline" + e.getStatusCode() + " " + e);
 			}
 		}
 		if (rateLimit == 2) {
-			log.debug("TimeLine writed in the TimeLine.txt file");
 			createTimeLineFile();
+			log.debug("TimeLine writed in the TimeLine.txt file");
 		}
-		if (rateLimit <= 1) {
-			log.debug("TimeLine readed from the file TimeLine.txt");
+		if (rateLimit < 2) {
 			readTimeLineFile();
+			log.debug("TimeLine readed from the file TimeLine.txt");
 		}
 
 	}
@@ -61,10 +60,18 @@ public class HomeTimeLine {
 		File userDir = new File(timeLineFileLocation);
 		userDir.mkdirs();
 		PrintWriter pw = null;
+		StringBuilder sb = new StringBuilder();
 		try {
 			pw = new PrintWriter(new FileOutputStream(userDir + "/TimeLine.txt"));
 			for (Tweets t : timeLineList) {
-				pw.println(t.getId() + "@" + t.getName() + "(text)" + t.getText());
+				sb.append("(ID)");
+				sb.append(t.getId());
+				sb.append("@");
+				sb.append(t.getName());
+				sb.append("(text)");
+				sb.append(t.getText());
+				pw.println(sb.toString());
+				sb.setLength(0);
 			}
 		} catch (FileNotFoundException e) {
 			log.error("Can't create TimeLine.txt file");
@@ -77,30 +84,41 @@ public class HomeTimeLine {
 
 	public void readTimeLineFile() {
 		timeLineList.clear();
-		BufferedReader br = null;
+
+		Scanner in = null;
 		try {
-			br = new BufferedReader(new FileReader(timeLineFileLocation + "/TimeLine.txt"));
+			in = new Scanner(new File(timeLineFileLocation + "/TimeLine.txt"));
+
 			String line;
-			while ((line = br.readLine()) != null) {
-				line.trim();
-				long id = Long.parseLong(line.substring(0, line.indexOf("@")));
-				String name = line.substring(line.indexOf("@") + 1, line.indexOf("(text)"));
-				String text = line.substring(line.indexOf("(text)") + 6, line.length());
-				timeLineList.add(new Tweets(id, name, text));
+			boolean broken = false;
+			while ((line = in.nextLine()) != null) {
+
+				if ("".equals(line)) {
+					broken = true;
+					continue;
+				}
+
+				if (!broken & "(ID)".equals(line.substring(0, 4))) {
+					line.trim();
+					long id = Long.parseLong(line.substring(line.indexOf("(ID)") + 4, line.indexOf("@")));
+					String name = line.substring(line.indexOf("@") + 1, line.indexOf("(text)"));
+					String text = line.substring(line.indexOf("(text)") + 6, line.length());
+					timeLineList.add(new Tweets(id, name, text));
+				}
+
+				else if (broken & !"(ID)".equals(line.substring(0, 4))) {
+					Tweets tweet = timeLineList.get(timeLineList.size() - 1);
+					String str = tweet.getText();
+					tweet.setText(str + " " + line);
+					broken = false;
+				}
 			}
 			log.debug("TimeLineList read correctly");
 		} catch (FileNotFoundException e) {
 			log.error("TimeLine.txt file not found", e);
-		} catch (IOException i) {
-			log.error("FriendList file don't found", i);
 		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					log.error("Error while trying to close bufferedreader strram", e);
-
-				}
+			if (in != null) {
+				in.close();
 			}
 		}
 	}
@@ -126,6 +144,10 @@ public class HomeTimeLine {
 
 		public long getId() {
 			return id;
+		}
+
+		public void setText(String str) {
+			this.text = str;
 		}
 	}
 }
