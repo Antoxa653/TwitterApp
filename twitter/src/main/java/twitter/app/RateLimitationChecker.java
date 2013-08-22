@@ -1,5 +1,8 @@
 package twitter.app;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Map;
 
 import twitter4j.RateLimitStatus;
@@ -14,24 +17,22 @@ public class RateLimitationChecker {
 
 	RateLimitationChecker(Twitter t) {
 		this.twitter = t;
-		setMapOfRateLimits();
+		try {
+			rateLimits = twitter.getRateLimitStatus();
+			//checkLimitStatusForEndpoints();
+
+		} catch (TwitterException e) {
+			log.error("Error while trying to get rate limits: ", e);
+
+		}		
 	}
 
 	public Map<String, RateLimitStatus> getRateLimits() {
 		return rateLimits;
 	}
-
-	private void setMapOfRateLimits() {
-		try {
-			rateLimits = twitter.getRateLimitStatus();
-		} catch (TwitterException e) {
-			log.error("Error while trying to get rate limits: " + e.getStatusCode() + " " + e);
-
-		}
-	}
-
+	
 	public int checkLimitStatusForEndpoint(String str) {
-		int limit = 180;
+		int limit = -1;
 		for (String endpoint : rateLimits.keySet()) {
 			if (endpoint.equals(str)) {
 				RateLimitStatus status = rateLimits.get(endpoint);
@@ -45,13 +46,20 @@ public class RateLimitationChecker {
 	}
 
 	public void checkLimitStatusForEndpoints() {
-		for (String endpoint : rateLimits.keySet()) {
-			RateLimitStatus status = rateLimits.get(endpoint);
-			log.debug("Endpoint: " + endpoint);
-			log.debug("Limit: " + status.getLimit());
-			log.debug("Remaining: " + status.getRemaining());
-			log.debug("ResetTimeInSeconds: " + status.getResetTimeInSeconds());
-			log.debug("SecondsUntilReset: " + status.getSecondsUntilReset());
+		PrintWriter pw = null;
+		try {
+			pw = new PrintWriter(new File("C://endpointsLimits.txt"));
+			for (String endpoint : rateLimits.keySet()) {
+				RateLimitStatus status = rateLimits.get(endpoint);
+				pw.println("Endpoint: " + endpoint + " Limit: " + status.getLimit() + " Remaining: "
+						+ status.getRemaining() + " ResetTimeInSeconds: " + status.getResetTimeInSeconds()
+						+ " SecondsUntilReset: " + status.getSecondsUntilReset());
+			}
+		} catch (FileNotFoundException e) {
+			log.error("File C://endpointsLimits.txt no found ", e);
+		} finally {
+			pw.close();
 		}
+
 	}
 }

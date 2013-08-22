@@ -2,10 +2,14 @@ package twitter.app;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -44,7 +48,7 @@ import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultCaret;
 
 import twitter.app.FriendList.Friend;
-import twitter.app.HomeTimeLine.Tweets;
+import twitter.app.HomeTimeLine.Tweet;
 import twitter.app.UserDirectMessage.Conversation;
 import twitter4j.internal.logging.Logger;
 
@@ -64,6 +68,7 @@ public class MainFrame extends JFrame {
 	private Map<Panels, PanelsViews> currentViewMap;
 
 	private String currentName;
+	private Container container;
 
 	MainFrame(TwitterInitialization ti) {
 		this.friendList = ti.getFl();
@@ -79,7 +84,7 @@ public class MainFrame extends JFrame {
 		setMinimumSize(new Dimension(screenWidth / 2, screenHeight / 2));
 		setLocationRelativeTo(null);
 		setTitle("Twitter Application");
-		setResizable(false);
+		setResizable(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setBackground(Color.WHITE);
 
@@ -90,18 +95,20 @@ public class MainFrame extends JFrame {
 		secondPanel.setBorder(BorderFactory.createEtchedBorder());
 		secondPanel.setLayout(new BorderLayout());
 		thirdPanel = createPreferredSizePanel(new Dimension(screenWidth / 4, screenHeight / 2));
-		thirdPanel.setBorder(BorderFactory.createEtchedBorder());
+		thirdPanel.setBorder(BorderFactory.createLineBorder(new Color(84, 162, 252), 1, true));
 		thirdPanel.setLayout(new BorderLayout());
 
 		//Initialize Map<Panels, PanelsViews> currentViewMap;
 		createCurrentView();
 
+		container = getContentPane();
+
 		createMenuBar();
 		firstPanel.add(BorderLayout.CENTER, createButtonPanel());
 		secondPanel.add(BorderLayout.CENTER, createLogoPanel());
 
-		GroupLayout layout = new GroupLayout(getContentPane());
-		getContentPane().setLayout(layout);
+		GroupLayout layout = new GroupLayout(container);
+		container.setLayout(layout);
 		layout.setAutoCreateGaps(true);
 		layout.setAutoCreateContainerGaps(true);
 
@@ -111,7 +118,7 @@ public class MainFrame extends JFrame {
 						.addComponent(secondPanel))
 				.addComponent(thirdPanel));
 
-		layout.linkSize(SwingConstants.HORIZONTAL, firstPanel, secondPanel);
+		//layout.linkSize(SwingConstants.HORIZONTAL, firstPanel, secondPanel);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -592,51 +599,93 @@ public class MainFrame extends JFrame {
 
 	}
 
-	private JPanel createHomeTimeLinePanel() {
+	private JScrollPane createHomeTimeLinePanel() {
 		currentViewMap.put(Panels.THIRDPANEL, PanelsViews.HOMETIMELINEPANEL);
 
-		JPanel homeTimeLinePanel = new JPanel();
-		homeTimeLinePanel.setLayout(new BorderLayout());
 		final JPanel container = new JPanel();
 		BoxLayout layout = new BoxLayout(container, BoxLayout.PAGE_AXIS);
 		container.setLayout(layout);
-		List<Tweets> homeTileLineTweets = timeLine.getTimeLineList();
-		for (Tweets t : homeTileLineTweets) {
-			JPanel panel = new JPanel();
-			BorderLayout panelLayout = new BorderLayout();
-			panel.setBackground(Color.GRAY);
-			panel.setLayout(panelLayout);
-			panel.setBorder(BorderFactory.createEtchedBorder());
-
-			final JTextArea textArea = new JTextArea();
-			JLabel label = new JLabel();
-			label.setText(t.getName());
-
-			DefaultCaret caret = (DefaultCaret) textArea.getCaret();
-			caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-			textArea.append(t.getText() + " ");
-			textArea.setEditable(false);
-			textArea.setWrapStyleWord(true);
-			textArea.setLineWrap(true);
-
-			textArea.addMouseListener(new UrlFromMessages(textArea));
-
-			panel.add(textArea, BorderLayout.CENTER);
-			panel.add(label, BorderLayout.NORTH);
-			container.add(panel);
-		}
-
-		JScrollPane timeLineScrollPane = new JScrollPane(container);
+		List<Tweet> homeTimeLineTweets = timeLine.getTimeLineList();
+		JScrollPane timeLineScrollPane = new JScrollPane();
 		timeLineScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		timeLineScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		homeTimeLinePanel.add(BorderLayout.CENTER, timeLineScrollPane);
-		return homeTimeLinePanel;
+		for (Tweet t : homeTimeLineTweets) {
+			container.add(homeTimeLineTweetPanel(t));
+		}
 
+		timeLineScrollPane.setViewportView(container);
+
+		return timeLineScrollPane;
 	}
 
-	private JPanel createInternaHomeTimeLinelPanel(String text) {
+	private JPanel homeTimeLineTweetPanel(Tweet t) {
+		JPanel panel = new JPanel();
+		BorderLayout panelLayout = new BorderLayout();
+		panel.setLayout(panelLayout);
+		panel.setBorder(BorderFactory.createEtchedBorder());
+
+		final JTextArea textArea = new JTextArea();
+		textArea.addMouseListener(new UrlFromMessages(textArea, t));
+		DefaultCaret caret = (DefaultCaret) textArea.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+		textArea.setEditable(false);
+		textArea.setWrapStyleWord(true);
+		textArea.setLineWrap(true);
+
+		final JLabel label = new JLabel();
+		if (t.isStatusRetweet()) {
+			label.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @" + t.getStatusCreatorIdentifiers()[1]
+					+ "</b> retweeted <br>"
+					+ t.getRetweetedStatusCreatorIdentifiers()[2] + " @" + t.getRetweetedStatusCreatorIdentifiers()[1]
+					+ "</html>");
+			textArea.setText(t.getRetweetedStatusCreatorIdentifiers()[3] + " ");
+		}
+		else {
+			label.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @"
+					+ t.getStatusCreatorIdentifiers()[1] + "</b></html>");
+			textArea.setText(t.getStatusText() + " ");
+		}
+		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
+			label.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @" + t.getStatusCreatorIdentifiers()[1]
+					+ "</b> >>>> @"
+					+ t.getGetInReplyTo().get(1) + "</html>");
+		}
+
+		panel.add(label, BorderLayout.NORTH);
+		panel.add(textArea);
+
+		container.addComponentListener(new ComponentListener() {
+
+			@Override
+			public void componentResized(ComponentEvent e) {
+				textArea.setSize(new Dimension(container.getWidth() / 2 - 100, container.getHeight()));
+				label.setSize(new Dimension(container.getWidth() / 2 - 100, container.getHeight()));
+			}
+
+			@Override
+			public void componentMoved(ComponentEvent e) {
+				//no code
+
+			}
+
+			@Override
+			public void componentShown(ComponentEvent e) {
+				// no code
+
+			}
+
+			@Override
+			public void componentHidden(ComponentEvent e) {
+				// no code
+
+			}
+		});
+
+		return panel;
+	}
+
+	private JPanel createInternaHomeTimeLinelPanel(Tweet t) {
 		currentViewMap.put(Panels.THIRDPANEL, PanelsViews.INTERNALHOMETIMELINEPANEL);
-		String tweetText = text;
 
 		JPanel internaHomeTimeLinelPanel = new JPanel();
 
@@ -652,12 +701,85 @@ public class MainFrame extends JFrame {
 
 		});
 
-		final JTextArea textArea = new JTextArea();
-		textArea.setText(tweetText);
-		textArea.setEditable(false);
-		textArea.setWrapStyleWord(true);
-		textArea.setLineWrap(true);
-		textArea.setBorder(BorderFactory.createEtchedBorder());
+		JLabel tweetCreatorNameLabel = new JLabel();
+
+		final JTextArea statusTextArea = new JTextArea();
+
+		statusTextArea.setEditable(false);
+		statusTextArea.setWrapStyleWord(true);
+		statusTextArea.setLineWrap(true);
+		statusTextArea.setBorder(BorderFactory.createEtchedBorder());
+		statusTextArea.setBackground(Color.WHITE);
+
+		statusTextArea.addMouseListener(new UrlFromMessages(statusTextArea, t));
+
+		if (t.isStatusRetweet()) {
+			tweetCreatorNameLabel.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @"
+					+ t.getStatusCreatorIdentifiers()[1]
+					+ "</b> retweeted <br>" + t.getRetweetedStatusCreatorIdentifiers()[1]
+					+ " @" + t.getRetweetedStatusCreatorIdentifiers()[2] + "</html>");
+			statusTextArea.setText(t.getRetweetedStatusCreatorIdentifiers()[3] + " ");
+		}
+		else {
+			tweetCreatorNameLabel.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @"
+					+ t.getStatusCreatorIdentifiers()[1] + "</b></html>");
+			statusTextArea.setText(t.getStatusText() + " ");
+		}
+		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
+			tweetCreatorNameLabel.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @"
+					+ t.getStatusCreatorIdentifiers()[1] + "</b> >>>><br>" + t.getGetInReplyTo().get(2) + " @"
+					+ t.getGetInReplyTo().get(1) + "</html>");
+		}
+
+		JPanel replyPanel = new JPanel();
+		replyPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		BoxLayout replyLayout = new BoxLayout(replyPanel, BoxLayout.PAGE_AXIS);
+		replyPanel.setLayout(replyLayout);
+		replyPanel.setVisible(false);
+		JScrollPane replyPane = new JScrollPane(replyPanel);
+		replyPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		replyPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		replyPane.setBorder(BorderFactory.createEtchedBorder());
+		replyPane.setVisible(false);
+		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
+			int replyIndex = t.getGetInReplyTo().size();
+			replyPanel.setVisible(true);
+			replyPane.setVisible(true);
+			while (replyIndex > 0) {
+				JTextArea replyArea = new JTextArea();
+				replyArea.setEditable(false);
+				replyArea.setWrapStyleWord(true);
+				replyArea.setLineWrap(true);
+				replyArea.setBorder(BorderFactory.createEtchedBorder());
+				replyArea.setBackground(Color.WHITE);
+				replyArea.setText(t.getGetInReplyTo().get(replyIndex - 1) + " ");
+				replyArea.addMouseListener(new UrlFromMessages(replyArea, t));
+
+				JLabel replyCreatorLabel = new JLabel();
+				if (replyIndex > 9) {
+					replyCreatorLabel.setText("<html><b>" + t.getGetInReplyTo().get(replyIndex - 3) + " @"
+							+ t.getGetInReplyTo().get(replyIndex - 4) + "</b> >>>><br>"
+							+ t.getGetInReplyTo().get(replyIndex - 8) + " @" + t.getGetInReplyTo().get(replyIndex - 9)
+							+ "</html>");
+				}
+				else {
+					replyCreatorLabel.setText("<html><b>" + t.getGetInReplyTo().get(replyIndex - 3) + " @"
+							+ t.getGetInReplyTo().get(replyIndex - 4) + "</b>>>>><br>"
+							+ t.getStatusCreatorIdentifiers()[2] + " @"
+							+ t.getStatusCreatorIdentifiers()[1] + "</html>");
+				}
+
+				Box b1 = Box.createHorizontalBox();
+				b1.add(replyCreatorLabel);
+				b1.add(Box.createHorizontalGlue());
+				replyPanel.add(b1);
+
+				replyPanel.add(replyArea);
+				replyIndex -= 5;
+
+			}
+
+		}
 
 		GroupLayout layout = new GroupLayout(internaHomeTimeLinelPanel);
 		internaHomeTimeLinelPanel.setLayout(layout);
@@ -666,14 +788,17 @@ public class MainFrame extends JFrame {
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(backButton)
-						.addComponent(textArea)
+						.addComponent(replyPane)
+						.addComponent(tweetCreatorNameLabel)
+						.addComponent(statusTextArea)
 				));
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addComponent(backButton)
-				.addComponent(textArea));
+				.addComponent(replyPane)
+				.addComponent(tweetCreatorNameLabel)
+				.addComponent(statusTextArea));
 
-		textArea.addMouseListener(new UrlFromMessages(textArea));
 		return internaHomeTimeLinelPanel;
 	}
 
@@ -710,6 +835,7 @@ public class MainFrame extends JFrame {
 		private int updateTimeDelay = 180000;
 		private Timer timer;
 		private boolean isWorking = false;
+		private boolean isUpdated = true;
 
 		MainFrameDataUpdateTimer() {
 			timer = new Timer(true);
@@ -727,20 +853,23 @@ public class MainFrame extends JFrame {
 		}
 
 		private class AutoUpdate extends SwingWorker<Object, Object> {
-
 			@Override
 			protected Object doInBackground() throws Exception {
 				isWorking = true;
-				userDirectMessage.setSentMessagesList();
-				userDirectMessage.setRecievedMessagesList();
-				timeLine.setTimeLineList();
-				log.debug("Time Line has been updated");
+				if (!isUpdated) {
+					userDirectMessage.setSentMessagesList();
+					userDirectMessage.setRecievedMessagesList();
+					timeLine.setTimeLineList();
+					friendList.updateFriendList();
+					log.debug("Time Line has been updated");
+				}
 				return null;
 			}
 
 			@Override
 			protected void done() {
 				isWorking = false;
+				isUpdated = false;
 				if (currentViewMap.get(Panels.THIRDPANEL) == PanelsViews.HOMETIMELINEPANEL) {
 					thirdPanel.removeAll();
 					thirdPanel.add(BorderLayout.CENTER, createHomeTimeLinePanel());
@@ -759,7 +888,12 @@ public class MainFrame extends JFrame {
 							createInternalConversationPanel(getCurrentNameForInternalConversationsPanel()));
 					secondPanel.revalidate();
 					secondPanel.repaint();
-
+				}
+				if (currentViewMap.get(Panels.SECONDPANEL) == PanelsViews.FRIENDPANEL) {
+					secondPanel.removeAll();
+					secondPanel.add(BorderLayout.CENTER, createFriendPanel());
+					secondPanel.revalidate();
+					secondPanel.repaint();
 				}
 
 			}
@@ -768,9 +902,11 @@ public class MainFrame extends JFrame {
 
 	private final class UrlFromMessages extends MouseAdapter {
 		private JTextArea textArea;
+		private Tweet t;
 
-		private UrlFromMessages(JTextArea ta) {
+		private UrlFromMessages(JTextArea ta, Tweet t) {
 			this.textArea = ta;
+			this.t = t;
 		}
 
 		public void mouseClicked(MouseEvent me) {
@@ -778,16 +914,16 @@ public class MainFrame extends JFrame {
 			int x = me.getX();
 			int y = me.getY();
 			String text = textArea.getText();
-			String regexUrl = "(http{1}s?://)((\\w\\.?\\-?)+\\/?)+([\\s]*)(\\W*)";
-			String regexWord = "(\\s{1})|(\\).)|”";
+			String regexUrl = "http://{1}[a-zA-Z0-9./-]*|https://{1}[a-zA-Z0-9./-]*";
+			String regexWord = "\\s|^[a-zà-ÿÀ-ß0-9A-Z]*[^http://]";
 			int startOffset = textArea.viewToModel(new Point(x, y));
 			String[] array = text.split(regexWord);
 			for (String s : array) {
-				if (s.matches(regexUrl)) {
+				int start = text.indexOf(s);
+				int finish = start + s.length();
+				if (start <= startOffset && startOffset <= finish) {
 					goInto = false;
-					int start = text.indexOf(s);
-					int finish = start + s.length();
-					if (start <= startOffset && startOffset <= finish) {
+					if (s.matches(regexUrl)) {
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {
 							try {
@@ -805,15 +941,15 @@ public class MainFrame extends JFrame {
 					}
 					else if (currentViewMap.get(Panels.THIRDPANEL) == PanelsViews.HOMETIMELINEPANEL) {
 						thirdPanel.removeAll();
-						thirdPanel.add(BorderLayout.CENTER, createInternaHomeTimeLinelPanel(textArea.getText()));
+						thirdPanel.add(BorderLayout.CENTER, createInternaHomeTimeLinelPanel(t));
 						thirdPanel.revalidate();
 						thirdPanel.repaint();
 					}
 				}
 			}
-			if (goInto) {
+			if (goInto && currentViewMap.get(Panels.THIRDPANEL) != PanelsViews.INTERNALHOMETIMELINEPANEL) {
 				thirdPanel.removeAll();
-				thirdPanel.add(BorderLayout.CENTER, createInternaHomeTimeLinelPanel(textArea.getText()));
+				thirdPanel.add(BorderLayout.CENTER, createInternaHomeTimeLinelPanel(t));
 				thirdPanel.revalidate();
 				thirdPanel.repaint();
 			}

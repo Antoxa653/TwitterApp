@@ -22,13 +22,22 @@ public class FriendList {
 	private Logger log = Logger.getLogger(FriendList.class.getClass());
 	private Twitter twitter;
 	private Set<Friend> friendList = new LinkedHashSet<Friend>();
+	private ResourceFilesChecker file;
+	private int userFriendNumber;
 
 	public FriendList(Twitter twitter) {
 		this.twitter = twitter;
-		ResourceFilesChecker file = new ResourceFilesChecker();
+		file = new ResourceFilesChecker();
 		boolean exist = file.isFriendListFileExist();
 		if (exist) {
-			readFriendListFile();
+			if (getCurrentNumberOfFriends() == getFriendsCount()) {
+				readFriendListFile();
+			}
+			else {
+				createFriendList();
+				createFriendListFile();
+			}
+
 		}
 		else {
 			createFriendList();
@@ -40,7 +49,24 @@ public class FriendList {
 		return friendList;
 	}
 
+	private int getFriendsCount() {
+		int friendNumber = -1;
+		try {
+			friendNumber = twitter.showUser(twitter.getId()).getFriendsCount();
+		} catch (IllegalStateException e) {
+			log.error(
+					"Java environment or Java application is not in an appropriate state for the requested operation",
+					e);
+		} catch (TwitterException e) {
+			log.error("Error while try to get Number of Authendificated user favorites", e);
+		}
+		//log.debug(String.valueOf(friendNumber));
+		return friendNumber;
+
+	}
+
 	private void createFriendList() {
+		friendList.clear();
 		try {
 			long[] friendsIDs = twitter.getFriendsIDs(-1).getIDs();
 			for (int i = 0; i < friendsIDs.length; i += 100) {
@@ -57,6 +83,7 @@ public class FriendList {
 		} catch (TwitterException te) {
 			log.error("Twitter Exception :" + te.getStatusCode(), te);
 		}
+
 	}
 
 	public void deleteFriend(String selectedFriend) {
@@ -128,6 +155,7 @@ public class FriendList {
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new FileOutputStream(userDir + "/FriendList.txt"));
+			pw.println(getFriendsCount());
 			for (Friend f : friendList) {
 				pw.println(f.getId() + " " + f.getName() + "@" + f.getScreenName());
 			}
@@ -140,12 +168,39 @@ public class FriendList {
 		}
 	}
 
+	private int getCurrentNumberOfFriends() {
+		File userDir = new File(friendListFileLocation);
+		userDir.mkdirs();
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(userDir + "/FriendList.txt"));
+			//Read friends number
+			userFriendNumber = Integer.parseInt(br.readLine());
+			log.debug("FriendList.txt file read correctly");
+		} catch (FileNotFoundException e) {
+			log.error("FriendList file not found", e);
+		} catch (IOException i) {
+			log.error("FriendList file not found", i);
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					log.error("Stream cant be close in finally block", e);
+				}
+			}
+		}
+		return userFriendNumber;
+	}
+
 	private void readFriendListFile() {
 		File userDir = new File(friendListFileLocation);
 		userDir.mkdirs();
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(userDir + "/FriendList.txt"));
+			//Skip line with friends number info
+			br.readLine();
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();
@@ -167,6 +222,22 @@ public class FriendList {
 					log.error("Stream cant be close in finally block", e);
 				}
 			}
+		}
+	}
+
+	public void updateFriendList() {
+		if (file.isFriendListFileExist()) {
+			if (getCurrentNumberOfFriends() == getFriendsCount()) {
+				return;
+			}
+			else {
+				createFriendList();
+				createFriendListFile();
+			}
+		}
+		else {
+			createFriendList();
+			createFriendListFile();
 		}
 	}
 

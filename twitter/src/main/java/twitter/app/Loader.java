@@ -9,6 +9,8 @@ public class Loader {
 	public static void main(String[] args) {
 		ResourceFilesChecker resource = new ResourceFilesChecker();
 		boolean exist = resource.isTwitterPropertiesFileExist();
+		final LookAndFeelInitialization l = new LookAndFeelInitialization();
+		l.init();
 		if (!exist) {
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
