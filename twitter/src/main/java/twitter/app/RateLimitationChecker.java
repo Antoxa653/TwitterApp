@@ -19,7 +19,6 @@ public class RateLimitationChecker {
 		this.twitter = t;
 		try {
 			rateLimits = twitter.getRateLimitStatus();
-			//checkLimitStatusForEndpoints();
 
 		} catch (TwitterException e) {
 			log.error("Error while trying to get rate limits: ", e);

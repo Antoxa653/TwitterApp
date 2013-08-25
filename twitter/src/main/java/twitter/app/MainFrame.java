@@ -86,7 +86,6 @@ public class MainFrame extends JFrame {
 		setTitle("Twitter Application");
 		setResizable(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		getContentPane().setBackground(Color.WHITE);
 
 		firstPanel = createPreferredSizePanel(new Dimension(screenWidth / 4, screenHeight / 16));
 		firstPanel.setBorder(BorderFactory.createEtchedBorder());
@@ -98,10 +97,10 @@ public class MainFrame extends JFrame {
 		thirdPanel.setBorder(BorderFactory.createLineBorder(new Color(84, 162, 252), 1, true));
 		thirdPanel.setLayout(new BorderLayout());
 
-		//Initialize Map<Panels, PanelsViews> currentViewMap;
 		createCurrentView();
 
 		container = getContentPane();
+		container.setBackground(Color.WHITE);
 
 		createMenuBar();
 		firstPanel.add(BorderLayout.CENTER, createButtonPanel());
@@ -117,8 +116,6 @@ public class MainFrame extends JFrame {
 						.addComponent(firstPanel)
 						.addComponent(secondPanel))
 				.addComponent(thirdPanel));
-
-		//layout.linkSize(SwingConstants.HORIZONTAL, firstPanel, secondPanel);
 
 		layout.setVerticalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -645,10 +642,10 @@ public class MainFrame extends JFrame {
 					+ t.getStatusCreatorIdentifiers()[1] + "</b></html>");
 			textArea.setText(t.getStatusText() + " ");
 		}
-		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
+		if (!"-1".equals(t.getTweetIsReplyTo().get(0))) {
 			label.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @" + t.getStatusCreatorIdentifiers()[1]
 					+ "</b> >>>> @"
-					+ t.getGetInReplyTo().get(1) + "</html>");
+					+ t.getTweetIsReplyTo().get(1) + "</html>");
 		}
 
 		panel.add(label, BorderLayout.NORTH);
@@ -656,25 +653,21 @@ public class MainFrame extends JFrame {
 
 		container.addComponentListener(new ComponentListener() {
 
-			@Override
 			public void componentResized(ComponentEvent e) {
 				textArea.setSize(new Dimension(container.getWidth() / 2 - 100, container.getHeight()));
 				label.setSize(new Dimension(container.getWidth() / 2 - 100, container.getHeight()));
 			}
 
-			@Override
 			public void componentMoved(ComponentEvent e) {
 				//no code
 
 			}
 
-			@Override
 			public void componentShown(ComponentEvent e) {
 				// no code
 
 			}
 
-			@Override
 			public void componentHidden(ComponentEvent e) {
 				// no code
 
@@ -725,10 +718,10 @@ public class MainFrame extends JFrame {
 					+ t.getStatusCreatorIdentifiers()[1] + "</b></html>");
 			statusTextArea.setText(t.getStatusText() + " ");
 		}
-		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
+		if (!"-1".equals(t.getTweetIsReplyTo().get(0))) {
 			tweetCreatorNameLabel.setText("<html><b>" + t.getStatusCreatorIdentifiers()[2] + " @"
-					+ t.getStatusCreatorIdentifiers()[1] + "</b> >>>><br>" + t.getGetInReplyTo().get(2) + " @"
-					+ t.getGetInReplyTo().get(1) + "</html>");
+					+ t.getStatusCreatorIdentifiers()[1] + "</b> >>>><br>" + t.getTweetIsReplyTo().get(2) + " @"
+					+ t.getTweetIsReplyTo().get(1) + "</html>");
 		}
 
 		JPanel replyPanel = new JPanel();
@@ -741,8 +734,8 @@ public class MainFrame extends JFrame {
 		replyPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		replyPane.setBorder(BorderFactory.createEtchedBorder());
 		replyPane.setVisible(false);
-		if (!"-1".equals(t.getGetInReplyTo().get(0))) {
-			int replyIndex = t.getGetInReplyTo().size();
+		if (!"-1".equals(t.getTweetIsReplyTo().get(0))) {
+			int replyIndex = t.getTweetIsReplyTo().size();
 			replyPanel.setVisible(true);
 			replyPane.setVisible(true);
 			while (replyIndex > 0) {
@@ -752,19 +745,19 @@ public class MainFrame extends JFrame {
 				replyArea.setLineWrap(true);
 				replyArea.setBorder(BorderFactory.createEtchedBorder());
 				replyArea.setBackground(Color.WHITE);
-				replyArea.setText(t.getGetInReplyTo().get(replyIndex - 1) + " ");
+				replyArea.setText(t.getTweetIsReplyTo().get(replyIndex - 1) + " ");
 				replyArea.addMouseListener(new UrlFromMessages(replyArea, t));
 
 				JLabel replyCreatorLabel = new JLabel();
 				if (replyIndex > 9) {
-					replyCreatorLabel.setText("<html><b>" + t.getGetInReplyTo().get(replyIndex - 3) + " @"
-							+ t.getGetInReplyTo().get(replyIndex - 4) + "</b> >>>><br>"
-							+ t.getGetInReplyTo().get(replyIndex - 8) + " @" + t.getGetInReplyTo().get(replyIndex - 9)
+					replyCreatorLabel.setText("<html><b>" + t.getTweetIsReplyTo().get(replyIndex - 3) + " @"
+							+ t.getTweetIsReplyTo().get(replyIndex - 4) + "</b> >>>><br>"
+							+ t.getTweetIsReplyTo().get(replyIndex - 8) + " @" + t.getTweetIsReplyTo().get(replyIndex - 9)
 							+ "</html>");
 				}
 				else {
-					replyCreatorLabel.setText("<html><b>" + t.getGetInReplyTo().get(replyIndex - 3) + " @"
-							+ t.getGetInReplyTo().get(replyIndex - 4) + "</b>>>>><br>"
+					replyCreatorLabel.setText("<html><b>" + t.getTweetIsReplyTo().get(replyIndex - 3) + " @"
+							+ t.getTweetIsReplyTo().get(replyIndex - 4) + "</b>>>>><br>"
 							+ t.getStatusCreatorIdentifiers()[2] + " @"
 							+ t.getStatusCreatorIdentifiers()[1] + "</html>");
 				}
@@ -915,7 +908,7 @@ public class MainFrame extends JFrame {
 			int y = me.getY();
 			String text = textArea.getText();
 			String regexUrl = "http://{1}[a-zA-Z0-9./-]*|https://{1}[a-zA-Z0-9./-]*";
-			String regexWord = "\\s|^[a-zà-ÿÀ-ß0-9A-Z]*[^http://]";
+			String regexWord = "\\s|^[a-zï¿½-ï¿½ï¿½-ï¿½0-9A-Z]*[^http://]";
 			int startOffset = textArea.viewToModel(new Point(x, y));
 			String[] array = text.split(regexWord);
 			for (String s : array) {

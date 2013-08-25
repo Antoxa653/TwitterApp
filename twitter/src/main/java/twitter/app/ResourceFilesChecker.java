@@ -14,7 +14,7 @@ public class ResourceFilesChecker {
 	private final String recievedMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication"
 			+ "/RecievedMessages.txt";
 	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication"
-			+ "/TimeLine.txt";
+			+ "/TimeLine.xml";
 	private Logger log = Logger.getLogger(getClass());
 	private File friendListFile;
 	private File twitterPropertiesFile;

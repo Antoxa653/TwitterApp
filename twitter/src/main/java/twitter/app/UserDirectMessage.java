@@ -241,7 +241,7 @@ public class UserDirectMessage {
 	private void readRecievedMessagesFile(String filePath) {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(filePath));
+			br = new BufferedReader(new FileReader(filePath));			
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

@@ -14,7 +14,7 @@ public class UserStatus {
 	public boolean update(String newStatus) {
 		boolean complit = true;
 		try {
-			twitter.updateStatus(newStatus);
+			twitter.updateStatus(newStatus);			
 		} catch (TwitterException e) {
 			log.error("Twitter exception" + e.getStatusCode() + " " + e);
 			e.printStackTrace();
