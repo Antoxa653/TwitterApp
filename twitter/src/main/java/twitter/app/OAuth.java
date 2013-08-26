@@ -12,11 +12,11 @@ import twitter4j.TwitterException;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
 
+
 public class OAuth {
 	private final String consumerKey = "QrLV7P1izPRAP5YwktX0g";
 	private final String consumerSecret = "GXmGXmQblRkVtuuMiH1ZxneKaHt9OX3bdyVzb7i9w";
-	private String userHomeDir = System.getProperty("user.home") + "/TwitterApplication";
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass().getName());
 	private String access;
 	private String accessTokenSecret;
 	private RequestToken requestToken;
@@ -26,10 +26,6 @@ public class OAuth {
 	public OAuth(Twitter twitter) {
 		this.twitter = twitter;
 		this.twitter.setOAuthConsumer(consumerKey, consumerSecret);
-	}
-
-	public OAuth() {
-
 	}
 
 	public String getOAuthAuthorizationURL() {
@@ -64,11 +60,11 @@ public class OAuth {
 	}
 
 	public void printProperties(String consumerKey, String consumerSecret, String accessToken, String accessTokenSecret) {
-		File userDir = new File(userHomeDir);
-		userDir.mkdirs();
+		File file = new File(new ResourceFilesPath().getTwitter4jProerptiesFile());
+		file.getParentFile().mkdirs();
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new FileOutputStream(userDir + "/twitter4j.properties"));
+			pw = new PrintWriter(new FileOutputStream(file));
 			pw.println("debug=false");
 			pw.println("oauth.consumerKey=" + consumerKey);
 			pw.println("oauth.consumerSecret=" + consumerSecret);
@@ -76,7 +72,7 @@ public class OAuth {
 			pw.println("oauth.accessTokenSecret=" + accessTokenSecret);
 
 		} catch (FileNotFoundException e) {
-			log.error("Can't create twitter4j.properties", e);
+			log.error("Can't create twitter4j.properties file", e);
 
 		} finally {
 			if (pw != null) {

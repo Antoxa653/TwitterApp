@@ -5,15 +5,15 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.conf.ConfigurationBuilder;
-import twitter4j.internal.logging.Logger;
 
 public class TwitterInstance {
-	private Twitter twitter;
-	private Logger log = Logger.getLogger(getClass());
-	private String userHomeDir = System.getProperty("user.home") + "/TwitterApplication";
+	private Logger log = Logger.getLogger(getClass().getName());
+	private Twitter twitter;	
 	TwitterInstance() {
 		twitter = TwitterFactory.getSingleton();
 	}
@@ -23,7 +23,7 @@ public class TwitterInstance {
 	}
 
 	public Twitter readProperties() {
-		File propertiesFile = new File(userHomeDir + "/twitter4j.properties");		
+		File propertiesFile = new File(new ResourceFilesPath().getTwitter4jProerptiesFile());		
 		String[] a = new String[5];
 		BufferedReader br = null;
 		try {

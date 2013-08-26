@@ -6,10 +6,10 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 
-import twitter4j.internal.logging.Logger;
+import org.apache.log4j.Logger;
 
 public class DocumentSizeFilter extends DocumentFilter {
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass().getName());
 	private int maxCharacters;
 
 	public DocumentSizeFilter(int maxChars) {

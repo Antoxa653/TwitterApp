@@ -47,14 +47,15 @@ import javax.swing.SwingWorker;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.DefaultCaret;
 
+import org.apache.log4j.Logger;
+
 import twitter.app.FriendList.Friend;
 import twitter.app.HomeTimeLine.Tweet;
 import twitter.app.UserDirectMessage.Conversation;
-import twitter4j.internal.logging.Logger;
 
 public class MainFrame extends JFrame {
-	private final String imageLocation = "/image.jpg";
-	private Logger log = Logger.getLogger(getClass());
+	private final String IMAGE_ICON = "/image.jpg";
+	private Logger log = Logger.getLogger(getClass().getName());
 	private int screenWidth;
 	private int screenHeight;
 	private JPanel firstPanel;
@@ -148,8 +149,7 @@ public class MainFrame extends JFrame {
 		logoutItem.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {
 				dispose();
-				LogOut logout = new LogOut();
-				logout.doLogout();
+				LogOut.doLogout();
 			}
 
 		});
@@ -228,7 +228,7 @@ public class MainFrame extends JFrame {
 
 		JPanel panelWithLogo = new JPanel();
 		panelWithLogo.setLayout(new BorderLayout());
-		ImageIcon image = new ImageIcon(this.getClass().getResource(imageLocation));
+		ImageIcon image = new ImageIcon(this.getClass().getResource(IMAGE_ICON));
 		JLabel label = new JLabel();
 		label.setIcon(image);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -582,7 +582,7 @@ public class MainFrame extends JFrame {
 		textArea.setBorder(BorderFactory.createEtchedBorder());
 		textArea.setWrapStyleWord(true);
 		textArea.setLineWrap(true);
-		textArea.setEditable(false);
+		textArea.setEditable(false);		
 		textArea.setText(c.getText());
 		conversationMessagesPanel.add(textArea, BorderLayout.WEST);
 		conversationMessagesPanel.add(label, BorderLayout.CENTER);
@@ -628,6 +628,7 @@ public class MainFrame extends JFrame {
 		textArea.setEditable(false);
 		textArea.setWrapStyleWord(true);
 		textArea.setLineWrap(true);
+		textArea.setFocusable(false);
 
 		final JLabel label = new JLabel();
 		if (t.isStatusRetweet()) {
@@ -703,6 +704,7 @@ public class MainFrame extends JFrame {
 		statusTextArea.setLineWrap(true);
 		statusTextArea.setBorder(BorderFactory.createEtchedBorder());
 		statusTextArea.setBackground(Color.WHITE);
+		statusTextArea.setFocusable(false);
 
 		statusTextArea.addMouseListener(new UrlFromMessages(statusTextArea, t));
 
@@ -747,12 +749,14 @@ public class MainFrame extends JFrame {
 				replyArea.setBackground(Color.WHITE);
 				replyArea.setText(t.getTweetIsReplyTo().get(replyIndex - 1) + " ");
 				replyArea.addMouseListener(new UrlFromMessages(replyArea, t));
+				replyArea.setFocusable(false);
 
 				JLabel replyCreatorLabel = new JLabel();
 				if (replyIndex > 9) {
 					replyCreatorLabel.setText("<html><b>" + t.getTweetIsReplyTo().get(replyIndex - 3) + " @"
 							+ t.getTweetIsReplyTo().get(replyIndex - 4) + "</b> >>>><br>"
-							+ t.getTweetIsReplyTo().get(replyIndex - 8) + " @" + t.getTweetIsReplyTo().get(replyIndex - 9)
+							+ t.getTweetIsReplyTo().get(replyIndex - 8) + " @"
+							+ t.getTweetIsReplyTo().get(replyIndex - 9)
 							+ "</html>");
 				}
 				else {
@@ -824,7 +828,6 @@ public class MainFrame extends JFrame {
 	}
 
 	private class MainFrameDataUpdateTimer {
-		private Logger log = Logger.getLogger(getClass());
 		private int updateTimeDelay = 180000;
 		private Timer timer;
 		private boolean isWorking = false;
@@ -838,7 +841,6 @@ public class MainFrame extends JFrame {
 			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					log.debug("Time Line Updating...");
 					AutoUpdate autoUpdate = new AutoUpdate();
 					autoUpdate.execute();
 				}
@@ -850,11 +852,11 @@ public class MainFrame extends JFrame {
 			protected Object doInBackground() throws Exception {
 				isWorking = true;
 				if (!isUpdated) {
-					userDirectMessage.setSentMessagesList();
-					userDirectMessage.setRecievedMessagesList();
-					timeLine.setTimeLineList();
-					friendList.updateFriendList();
+					userDirectMessage.updateDirectMessages();
+					log.debug("Time Line Updating...");
+					timeLine.updateTimeLine();
 					log.debug("Time Line has been updated");
+					friendList.updateFriendList();
 				}
 				return null;
 			}

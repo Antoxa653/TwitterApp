@@ -14,6 +14,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -24,68 +25,51 @@ import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.URLEntity;
-import twitter4j.internal.logging.Logger;
 
 public class HomeTimeLine {
-	private final String timeLineFileLocation = System.getProperty("user.home") + "/TwitterApplication"
-			+ "/TimeLine.xml";
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass().getName());
 	private Twitter twitter;
 	private List<Tweet> timeLineList = new ArrayList<Tweet>();
-	private RateLimitationChecker rateLimitation;
 
 	public HomeTimeLine(Twitter twitter) {
 		this.twitter = twitter;
-		rateLimitation = new RateLimitationChecker(twitter);
-		setTimeLineList();
+		updateTimeLine();
 	}
 
 	public List<Tweet> getTimeLineList() {
 		return timeLineList;
 	}
 
-	private int getCurrentHomeTimeLineLimitStatus(String str) {
-		return rateLimitation.checkLimitStatusForEndpoint(str);
+	public final void updateTimeLine() {
+		RateLimitationChecker rateLimitationChecker = new RateLimitationChecker(twitter);
+		int limit = rateLimitationChecker.checkLimitStatusForEndpoint("/statuses/home_timeline");
+		if (limit > 2) {
+			initTimeLine();
+		}
+		if (limit == 2) {
+			initTimeLine();
+			saveTimeLineToFile();
+		}
+		if (limit < 2) {
+			readTimeLineFromFile(new ResourceFilesPath().getTimelineFile());
+		}
 	}
 
-	public final void setTimeLineList() {
-		int rateLimit = getCurrentHomeTimeLineLimitStatus("/statuses/home_timeline");
+	public final void initTimeLine() {
 		List<Status> statusList = new ArrayList<Status>();
-		if (rateLimit >= 2) {
-			try {
-				timeLineList.clear();
-				statusList = twitter.getHomeTimeline();
-				for (Status status : statusList) {
-
-					timeLineList.add(new Tweet(getStatusId(status), getStatusCreatorIdentifiers(status),
-							getStatusText(status), isStatusRetweet(status), isStatusRetweeted(status),
-							tweetIsReplyTo(status), getRetweetedStatusCreatorIdentifiers(status)));
-				}
-			} catch (TwitterException e) {
-				log.error("Error while updating timeline" + e.getStatusCode() + " " + e);
+		timeLineList.clear();
+		try {
+			statusList = twitter.getHomeTimeline();
+			for (Status status : statusList) {
+				timeLineList.add(new Tweet(getStatusId(status), getStatusCreatorIdentifiers(status),
+						getStatusText(status), isStatusRetweet(status), isStatusRetweeted(status),
+						tweetIsReplyTo(status), getRetweetedStatusCreatorIdentifiers(status)));
 			}
+			log.debug("TimeLineList was initialized from twitter");
+		} catch (TwitterException e) {
+			log.error("Error while updating timeLineList from twitter", e);
 		}
-		if (rateLimit == 2) {
-			createTimeLineFile(timeLineFileLocation);
-			log.debug("TimeLine writed in the TimeLine.xml file");
-		}
-		if (rateLimit < 2) {
-			timeLineList.clear();
-			readTimeLineFile(timeLineFileLocation);
-			log.debug("TimeLine readed from the file TimeLine.xml");
-		}
-	}
 
-	private long getStatusId(Status status) {
-		return status.getId();
-	}
-
-	private String[] getStatusCreatorIdentifiers(Status status) {
-		String[] identifiers = new String[3];
-		identifiers[0] = String.valueOf(status.getUser().getId());
-		identifiers[1] = status.getUser().getScreenName();
-		identifiers[2] = status.getUser().getName();
-		return identifiers;
 	}
 
 	private String getStatusText(Status status) {
@@ -98,6 +82,18 @@ public class HomeTimeLine {
 
 	private boolean isStatusRetweeted(Status status) {
 		return status.isRetweeted();
+	}
+
+	private long getStatusId(Status status) {
+		return status.getId();
+	}
+
+	private String[] getStatusCreatorIdentifiers(Status status) {
+		String[] identifiers = new String[3];
+		identifiers[0] = String.valueOf(status.getUser().getId());
+		identifiers[1] = status.getUser().getScreenName();
+		identifiers[2] = status.getUser().getName();
+		return identifiers;
 	}
 
 	private String[] getRetweetedStatusCreatorIdentifiers(Status status) {
@@ -120,27 +116,17 @@ public class HomeTimeLine {
 	}
 
 	private List<String> tweetIsReplyTo(Status status) {
-		int rateLimit = getCurrentHomeTimeLineLimitStatus("/statuses/show/:id");
+		int rateLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/statuses/show/:id");
 		List<String> replyTo = new ArrayList<String>();
 		if (rateLimit >= 2) {
 			String inReplyToStatusId = String.valueOf(status.getInReplyToStatusId());
 			if (!"-1".equals(inReplyToStatusId)) {
 				do {
 					replyTo.add(inReplyToStatusId);
-					String inReplyToScreenName = status.getInReplyToScreenName();
-					if (inReplyToScreenName == null) {
-						replyTo.add("-1");
-					}
-					else {
-						replyTo.add(inReplyToScreenName);
-						try {
-							replyTo.add(twitter.showUser(status.getInReplyToUserId()).getName());
-						} catch (TwitterException e) {
-							log.error("Cant obtain get in reply user name :", e);
-						}
-					}
-					replyTo.add(String.valueOf(status.getInReplyToUserId()));
+					replyTo.add(status.getInReplyToScreenName());
 					try {
+						replyTo.add(twitter.showUser(status.getInReplyToUserId()).getName());
+						replyTo.add(String.valueOf(status.getInReplyToUserId()));
 						Status str;
 						str = twitter.showStatus(Long.parseLong(inReplyToStatusId));
 						replyTo.add(parseStatusText(str.getText(), str.getURLEntities(), str.getMediaEntities()));
@@ -185,7 +171,6 @@ public class HomeTimeLine {
 		}
 		for (int i = 0; i < uEntity.length; i++) {
 			sb.append(" ");
-			//sb.insert(urlEntity[i].getStart(), urlEntity[i].getURL() + " ");
 			sb.append(uEntity[i].getURL());
 		}
 		for (int i = 0; i < mEntity.length; i++) {
@@ -195,17 +180,16 @@ public class HomeTimeLine {
 		return sb.toString().trim();
 	}
 
-	private void createTimeLineFile(String str) {
+	private void saveTimeLineToFile() {
 		try {
-			File file = new File(timeLineFileLocation);
+			File file = new File(new ResourceFilesPath().getTimelineFile());
+			file.getParentFile().mkdirs();
 			DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 			Document doc = docBuilder.newDocument();
 			Element rootElement = doc.createElement("timeLine");
 			doc.appendChild(rootElement);
 			for (int i = 0; i < timeLineList.size(); i++) {
-				//<timeline>
-
 				//<tweet>
 				Element tweetElement = doc.createElement("tweet");
 				tweetElement.setAttribute("tweet", String.valueOf(i));
@@ -380,6 +364,7 @@ public class HomeTimeLine {
 			StreamResult result = new StreamResult(file);
 
 			transformer.transform(source, result);
+			log.debug("timeLineList was saved to file TimeLine.xml");
 
 		} catch (ParserConfigurationException e) {
 			log.error("Parser Configuration error while writing TimeLine.xml file", e);
@@ -393,7 +378,7 @@ public class HomeTimeLine {
 
 	}
 
-	private void readTimeLineFile(String filePath) {		
+	private void readTimeLineFromFile(String filePath) {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder = null;
 		long statusId = 0;
@@ -421,10 +406,10 @@ public class HomeTimeLine {
 				tweetIsReplyTo = new ArrayList<String>();
 				isStatusRetweet = false;
 				isStatusRetweeted = false;
-				
+
 				Node nNode = nList.item(temp);
 				if (nNode.getNodeType() == Node.ELEMENT_NODE) {
-					
+
 					Element eElement = (Element) nNode;
 
 					statusId = Long.parseLong(eElement.getElementsByTagName("status_Id").item(0).getTextContent());
@@ -496,16 +481,16 @@ public class HomeTimeLine {
 
 				timeLineList.add(new Tweet(statusId, statusCreatorIdentifiers, statusText, isStatusRetweet,
 						isStatusRetweeted, tweetIsReplyTo, retweetedStatusCreatorIdentifiers));
-				
 
 			}
+			log.debug("timeLineList was readed from the file TimeLine.xml");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 	}
 
-	public class Tweet {
+	protected class Tweet {
 		private long statusId;
 		//statusCreatorIdentifiers[0] = Id, statusCreatorIdentifiers[1] = @ScreenName, statusCreatorIdentifiers[2] = Name;
 		private String[] statusCreatorIdentifiers;

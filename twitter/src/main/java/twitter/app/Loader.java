@@ -3,18 +3,20 @@ package twitter.app;
 import java.awt.EventQueue;
 
 import twitter4j.Twitter;
+import twitter4j.internal.logging.Logger;
 
-public class Loader {
+public final class Loader {
+	private static Logger log = Logger.getLogger(Loader.class);
 
 	public static void main(String[] args) {
-		ResourceFilesChecker resource = new ResourceFilesChecker();
-		boolean exist = resource.isTwitterPropertiesFileExist();
-		final LookAndFeelInitialization l = new LookAndFeelInitialization();
-		l.init();
+		log.debug("Start");
+		boolean exist = ResourceFilesChecker.isFileExist(new ResourceFilesPath().getTwitter4jProerptiesFile());
+		InterfaceStyle interfaceStyle = new InterfaceStyle();
+		interfaceStyle.init();
 		if (!exist) {
+			final Twitter twitter = new TwitterInstance().getTwitter();
 			EventQueue.invokeLater(new Runnable() {
 				public void run() {
-					final Twitter twitter = new TwitterInstance().getTwitter();
 					OAuthFrame oa = new OAuthFrame(twitter);
 					oa.setVisible(true);
 				}
@@ -31,5 +33,9 @@ public class Loader {
 				}
 			});
 		}
+	}
+
+	private Loader() {
+
 	}
 }

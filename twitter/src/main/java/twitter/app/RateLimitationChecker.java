@@ -5,41 +5,37 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.RateLimitStatus;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-import twitter4j.internal.logging.Logger;
 
 public class RateLimitationChecker {
-	private Logger log = Logger.getLogger(RateLimitationChecker.class);
+	private Logger log = Logger.getLogger(getClass().getName());
 	private Twitter twitter;
 	private Map<String, RateLimitStatus> rateLimits;
 
-	RateLimitationChecker(Twitter t) {
-		this.twitter = t;
+	RateLimitationChecker(Twitter tTwitter) {
+		this.twitter = tTwitter;
+	}
+
+	public int checkLimitStatusForEndpoint(String str) {
+		int limit = -1;
 		try {
 			rateLimits = twitter.getRateLimitStatus();
 
-		} catch (TwitterException e) {
-			log.error("Error while trying to get rate limits: ", e);
-
-		}		
-	}
-
-	public Map<String, RateLimitStatus> getRateLimits() {
-		return rateLimits;
-	}
-	
-	public int checkLimitStatusForEndpoint(String str) {
-		int limit = -1;
-		for (String endpoint : rateLimits.keySet()) {
-			if (endpoint.equals(str)) {
-				RateLimitStatus status = rateLimits.get(endpoint);
-				log.debug("Endpoint: " + endpoint);
-				log.debug("Remaining: " + status.getRemaining());
-				limit = status.getRemaining();
-				break;
+			for (String endpoint : rateLimits.keySet()) {
+				if (endpoint.equals(str)) {
+					RateLimitStatus status = rateLimits.get(endpoint);
+					log.debug("Endpoint: " + endpoint);
+					log.debug("Remaining: " + status.getRemaining());
+					limit = status.getRemaining();
+					break;
+				}
 			}
+		} catch (TwitterException e) {
+			log.debug("FUCK");
 		}
 		return limit;
 	}
@@ -47,6 +43,7 @@ public class RateLimitationChecker {
 	public void checkLimitStatusForEndpoints() {
 		PrintWriter pw = null;
 		try {
+			rateLimits = twitter.getRateLimitStatus();
 			pw = new PrintWriter(new File("C://endpointsLimits.txt"));
 			for (String endpoint : rateLimits.keySet()) {
 				RateLimitStatus status = rateLimits.get(endpoint);
@@ -56,9 +53,10 @@ public class RateLimitationChecker {
 			}
 		} catch (FileNotFoundException e) {
 			log.error("File C://endpointsLimits.txt no found ", e);
+		} catch (TwitterException e) {
+			log.debug("Error while updating Map<String,RateLimitStatus> rateLimits ", e);
 		} finally {
 			pw.close();
 		}
-
 	}
 }

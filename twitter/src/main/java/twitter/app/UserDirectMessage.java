@@ -1,6 +1,7 @@
 package twitter.app;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -18,91 +19,79 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.DirectMessage;
 import twitter4j.ResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-import twitter4j.internal.logging.Logger;
 
 public class UserDirectMessage {
-	private final String sentMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication"
-			+ "/SentMessages.txt";
-	private final String recievedMessagesFileLocation = System.getProperty("user.home") + "/TwitterApplication"
-			+ "/RecievedMessages.txt";
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass().getName());
 	private Twitter twitter;
 	private List<RecievedMessage> recieved = new LinkedList<RecievedMessage>();
 	private List<SentMessage> sent = new LinkedList<SentMessage>();
 	private List<Conversation> conv = new LinkedList<Conversation>();
-	private RateLimitationChecker rl;
 
 	UserDirectMessage(Twitter t) {
 		this.twitter = t;
-		setRecievedMessagesList();
-		setSentMessagesList();
+		updateDirectMessages();
+
 	}
 
 	public List<RecievedMessage> getRecievedMessagesList() {
 		return recieved;
 	}
 
-	public void setRecievedMessagesList() {
-		rl = new RateLimitationChecker(twitter);
-		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages");
-		if (rateLimit >= 2) {
-			try {
-				recieved.clear();
-				ResponseList<DirectMessage> recievedMessages = twitter.getDirectMessages();
-				for (DirectMessage m : recievedMessages) {
-					recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));
-				}
-				log.debug("Recieved Messages update");
-			} catch (TwitterException e) {
-				log.error("Error occurs while updating recieved messages: " + e.getStatusCode() + " " + e);
-			}
-		}
-		if (rateLimit == 2) {
-			log.debug("RecievedMessages.txt file created");
-			createRecievedMessagesFile(recievedMessagesFileLocation);
-		}
-		if (rateLimit < 2) {
-			log.debug("RecievedMessages.txt file readeding...");
-			recieved.clear();
-			readRecievedMessagesFile(recievedMessagesFileLocation);
-		}
-
-	}
-
 	public List<SentMessage> getSentMessagesList() {
 		return sent;
 	}
 
-	public void setSentMessagesList() {
-		rl = new RateLimitationChecker(twitter);
-		int rateLimit = rl.checkLimitStatusForEndpoint("/direct_messages/sent");
-		if (rateLimit >= 2) {
-			try {
-				sent.clear();
-				ResponseList<DirectMessage> sentMessages = twitter.getSentDirectMessages();
-				for (DirectMessage m : sentMessages) {
-					sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));
-				}
-				log.debug("Sent Messages update");
-			} catch (TwitterException e) {
-				log.error("Error occurs while updating sent messages" + e.getStatusCode() + " " + e);
+	public final void updateDirectMessages() {
+		RateLimitationChecker rateLimitationChecker = new RateLimitationChecker(twitter);
+		int recievedMessagesLimit = rateLimitationChecker.checkLimitStatusForEndpoint("/direct_messages");
+		int sentMessagesLimit = rateLimitationChecker.checkLimitStatusForEndpoint("/direct_messages/sent");
+		if (recievedMessagesLimit > 2 && sentMessagesLimit > 2) {
+			initRecievedMessagesList();
+			initSentMessagesList();
+		}
+		if (recievedMessagesLimit == 2 && sentMessagesLimit == 2) {
+			initRecievedMessagesList();
+			saveRecievedMessagesToFile(new ResourceFilesPath().getRecievedMessagesFile());
+			initSentMessagesList();
+			saveSentMessagesToFile(new ResourceFilesPath().getSentMessagesFile());
+		}
+		if (recievedMessagesLimit < 2 && sentMessagesLimit < 2) {
+			readRecievedMessagesFromFile(new ResourceFilesPath().getRecievedMessagesFile());
+			readSentMessagesFromFile(new ResourceFilesPath().getSentMessagesFile());
+		}
+	}
 
+	private final void initRecievedMessagesList() {
+		try {
+			recieved.clear();
+			ResponseList<DirectMessage> recievedMessages = twitter.getDirectMessages();
+			for (DirectMessage m : recievedMessages) {
+				recieved.add(new RecievedMessage(m.getId(), m.getSenderScreenName(), m.getText(), m.getCreatedAt()));
 			}
-		}
-		if (rateLimit == 2) {
-			createSentMessagesFile(sentMessagesFileLocation);
-			log.debug("SentMessages.txt file created");
-		}
-		if (rateLimit < 2) {
-			sent.clear();
-			readSentMessagesFile(sentMessagesFileLocation);
-			log.debug("SentMessages file reading...");
-		}
+			log.debug("RecievedMessagesList initialized correctly");
+		} catch (TwitterException e) {
+			log.error("Error occurs while updating recieved messages: " + e.getStatusCode() + " " + e);
 
+		}
+	}
+
+	private final void initSentMessagesList() {
+		try {
+			sent.clear();
+			ResponseList<DirectMessage> sentMessages = twitter.getSentDirectMessages();
+			for (DirectMessage m : sentMessages) {
+				sent.add(new SentMessage(m.getId(), m.getRecipientScreenName(), m.getText(), m.getCreatedAt()));
+			}
+			log.debug("SentMessagesList initialized correctly");
+		} catch (TwitterException e) {
+			log.error("Error occurs while updating sent messages" + e.getStatusCode() + " " + e);
+		}
 	}
 
 	public boolean sentDirectMessageTo(String name, String text) {
@@ -127,7 +116,7 @@ public class UserDirectMessage {
 		return list;
 	}
 
-	private void setConversationMessages(String name) {
+	private void initializeConversationMessages(String name) {
 		conv.clear();
 		for (RecievedMessage rm : recieved) {
 			if (rm.getSenderName().equals(name)) {
@@ -152,15 +141,17 @@ public class UserDirectMessage {
 	}
 
 	public List<Conversation> getConversationMessages(String name) {
-		setConversationMessages(name);
+		initializeConversationMessages(name);
 		return conv;
 	}
 
-	public void createSentMessagesFile(String filePath) {
+	private void saveSentMessagesToFile(String filePath) {
+		File file = new File(filePath);
+		file.getParentFile().mkdirs();
 		PrintWriter pw = null;
 		StringBuilder sb = new StringBuilder();
 		try {
-			pw = new PrintWriter(new FileOutputStream(filePath));
+			pw = new PrintWriter(new FileOutputStream(file));
 			for (SentMessage s : sent) {
 				sb.append(s.getId());
 				sb.append("@");
@@ -182,7 +173,35 @@ public class UserDirectMessage {
 
 	}
 
-	private void readSentMessagesFile(String filePath) {
+	private void saveRecievedMessagesToFile(String filePath) {
+		File file = new File(filePath);
+		file.getParentFile().mkdirs();
+		PrintWriter pw = null;
+		StringBuilder sb = new StringBuilder();
+		try {
+			pw = new PrintWriter(new FileOutputStream(file));
+			for (RecievedMessage r : recieved) {
+				sb.append(r.getId());
+				sb.append("@");
+				sb.append(r.getSenderName());
+				sb.append("(text)");
+				sb.append(r.getText());
+				sb.append("(Date)");
+				sb.append(r.getDate());
+				pw.println(sb.toString());
+				sb.setLength(0);
+			}
+		} catch (FileNotFoundException e) {
+			log.error("Error while creating RecievedMessages.txt file", e);
+		} finally {
+			if (pw != null) {
+				pw.close();
+			}
+		}
+
+	}
+
+	private void readSentMessagesFromFile(String filePath) {
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(filePath));
@@ -212,36 +231,10 @@ public class UserDirectMessage {
 		}
 	}
 
-	private void createRecievedMessagesFile(String filePath) {
-		PrintWriter pw = null;
-		StringBuilder sb = new StringBuilder();
-		try {
-			pw = new PrintWriter(new FileOutputStream(filePath));
-			for (RecievedMessage r : recieved) {
-				sb.append(r.getId());
-				sb.append("@");
-				sb.append(r.getSenderName());
-				sb.append("(text)");
-				sb.append(r.getText());
-				sb.append("(Date)");
-				sb.append(r.getDate());
-				pw.println(sb.toString());
-				sb.setLength(0);
-			}
-		} catch (FileNotFoundException e) {
-			log.error("Error while creating RecievedMessages.txt file", e);
-		} finally {
-			if (pw != null) {
-				pw.close();
-			}
-		}
-
-	}
-
-	private void readRecievedMessagesFile(String filePath) {
+	private void readRecievedMessagesFromFile(String filePath) {
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(filePath));			
+			br = new BufferedReader(new FileReader(filePath));
 			String line;
 			while ((line = br.readLine()) != null) {
 				line.trim();

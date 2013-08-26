@@ -4,14 +4,16 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingWorker;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.Twitter;
-import twitter4j.internal.logging.Logger;
+
 
 public class TwitterResourcesInitialization extends SwingWorker<TwitterInitialization, Object> {
 	private final Twitter twitter;
 	private ProgressBarFrame progressBarFrame;
 	private MainFrame mainFrame;
-	private Logger log = Logger.getLogger(getClass());
+	private Logger log = Logger.getLogger(getClass().getName());
 
 	public TwitterResourcesInitialization(ProgressBarFrame pbf, Twitter twitter) {
 		this.progressBarFrame = pbf;
@@ -27,8 +29,8 @@ public class TwitterResourcesInitialization extends SwingWorker<TwitterInitializ
 
 	@Override
 	protected void done() {
-		log.debug("Initialization done");
 		try {
+			log.debug("Initialization done");
 			mainFrame = new MainFrame(get());
 			mainFrame.init();
 			mainFrame.setVisible(true);

@@ -7,10 +7,12 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.plaf.FontUIResource;
 
-import twitter4j.internal.logging.Logger;
+import org.apache.log4j.Logger;
 
-public class LookAndFeelInitialization {
-	private Logger log = Logger.getLogger(getClass());
+
+
+public class InterfaceStyle {
+	private Logger log = Logger.getLogger(getClass().getName());
 	private String seaStyle = "com.seaglasslookandfeel.SeaGlassLookAndFeel";
 
 	public void init() {
@@ -26,6 +28,7 @@ public class LookAndFeelInitialization {
 			log.error("L&F them cant been used on this system ", e);
 		}
 		changeDefaultFontForLF();
+		log.debug("Interface style com.seaglasslookandfeel.SeaGlassLookAndFeel used");
 	}
 
 	private void changeDefaultFontForLF() {

@@ -1,6 +1,7 @@
 package twitter.app;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -27,65 +28,64 @@ import javax.swing.JPopupMenu;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import org.apache.log4j.Logger;
+
 import twitter4j.Twitter;
-import twitter4j.internal.logging.Logger;
 
 public class OAuthFrame extends JFrame {
 	private final Twitter twitter;
-	private Logger log = Logger.getLogger(getClass());
-	private URL url = null;
-	private JTextField pinTextField = null;
+	private Logger log = Logger.getLogger(getClass().getName());
+	private JTextField pinTextField;
+	private OAuth oa;
+	private URL url;
 	private JLabel errorLabel;
 
-	OAuthFrame(Twitter t) {
-		this.twitter = t;
+	OAuthFrame(Twitter tTwitter) {
+		this.twitter = tTwitter;
+
 		Toolkit kit = Toolkit.getDefaultToolkit();
 		Dimension screenSize = kit.getScreenSize();
 		int screenHeight = screenSize.height;
 		int screenWidth = screenSize.width;
-		setPreferredSize(new Dimension(screenWidth / 4, screenHeight / 4));
-		setMinimumSize(new Dimension(screenWidth / 4, screenHeight / 4));
+		setSize(new Dimension(screenWidth / 4, screenHeight / 4 + 100));
 		setLocationRelativeTo(null);
 		setTitle("Authorization");
 		setResizable(false);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		final OAuth oa = new OAuth(twitter);
-		setOAuthAuthorizationURL(oa);
-
-		getContentPane().setBackground(Color.WHITE);
-		GroupLayout layout = new GroupLayout(getContentPane());
-		getContentPane().setLayout(layout);
-		layout.setAutoCreateGaps(true);
-		layout.setAutoCreateContainerGaps(true);
+		oa = new OAuth(twitter);
+		url = getOAuthAuthorizationURL();
 
 		JTextArea infoArea = new JTextArea();
 		infoArea.setEditable(false);
+		infoArea.setFocusable(false);
 		infoArea.setWrapStyleWord(true);
 		infoArea.setLineWrap(true);
-		infoArea.setText("Follow the url and get PIN code to get access to your twitter accaunt:");
+		infoArea.setText("Follow the url below and use PIN code to get access to your twitter accaunt:");
 
 		JTextArea urlArea = new JTextArea();
-		Font font = new Font("Verdana", Font.ITALIC, 12);
 		urlArea.setEditable(false);
+		urlArea.setFocusable(false);
 		urlArea.setWrapStyleWord(true);
 		urlArea.setLineWrap(true);
 		urlArea.setForeground(Color.BLUE);
-		urlArea.setFont(font);
+		urlArea.setFont(new Font("Verdana", Font.ITALIC, 12));
 		urlArea.setText(url.toString());
 
 		JLabel pinLabel = new JLabel("Enter the received PIN code here:");
 		pinTextField = new JTextField();
 		pinTextField.setFont(new Font("SansSerif", Font.CENTER_BASELINE, 28));
-		JButton okButton = new JButton("Authorization");
+		JButton okButton = new JButton("Login");
 
 		errorLabel = new JLabel();
-		Font errorFont = new Font("Verdana", Font.BOLD, 12);
-		errorLabel.setFont(errorFont);
-		errorLabel.setForeground(Color.RED);
-		errorLabel.setText("Bad format of PIN code");
 		errorLabel.setVisible(false);
 
+		Container container = getContentPane();
+		container.setBackground(Color.WHITE);
+		GroupLayout layout = new GroupLayout(container);
+		container.setLayout(layout);
+		layout.setAutoCreateGaps(true);
+		layout.setAutoCreateContainerGaps(true);
 		layout.setHorizontalGroup(layout.createSequentialGroup()
 				.addGroup(layout.createParallelGroup(GroupLayout.Alignment.CENTER)
 						.addComponent(infoArea)
@@ -113,24 +113,26 @@ public class OAuthFrame extends JFrame {
 					menu.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
-
 		});
 
 		okButton.addMouseListener(new MouseAdapter() {
-			public void mousePressed(MouseEvent arg0) {
-				dispose();
-				ResourceFilesChecker resource = new ResourceFilesChecker();
-				if (spellCheckPIN() && oa.OAuthSetup(pinTextField.getText())
-						&& resource.isTwitterPropertiesFileExist()) {
-					log.info("PIN spellcheck passed");
+			public void mousePressed(MouseEvent e) {
+				if (spellCheckPIN() && oa.OAuthSetup(pinTextField.getText())) {
+					log.debug("PIN spellcheck passed");
 					EventQueue.invokeLater(new Runnable() {
 						public void run() {
+							dispose();
 							ProgressBarFrame pbf = new ProgressBarFrame();
 							TwitterResourcesInitialization init = new TwitterResourcesInitialization(pbf, twitter);
 							init.execute();
 							pbf.setVisible(true);
 						}
 					});
+				}
+				else {
+					errorLabel.setForeground(Color.RED);
+					errorLabel.setText("Bad format of PIN code");
+					errorLabel.setVisible(true);
 				}
 			}
 		});
@@ -142,11 +144,10 @@ public class OAuthFrame extends JFrame {
 					if (desktop.isSupported(Desktop.Action.BROWSE))
 						try {
 							desktop.browse(url.toURI());
-						} catch (IOException e) {
-							log.error("IOException", e);
-							e.printStackTrace();
 						} catch (URISyntaxException e) {
-							log.error("URISyntaxExceptin :", e);
+							log.error("URISyntaxException " + url.toString(), e);
+						} catch (IOException e) {
+							log.error("IOException trying to open desktop browser", e);
 						}
 				}
 			}
@@ -154,21 +155,23 @@ public class OAuthFrame extends JFrame {
 		});
 	}
 
-	private void setOAuthAuthorizationURL(OAuth oa) {
+	private URL getOAuthAuthorizationURL() {
+		URL url = null;
 		String urlString = oa.getOAuthAuthorizationURL();
 		try {
 			url = new URL(urlString);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
+			log.error("Incorrect form of URL", e);
 		}
+		return url;
 	}
 
-	public boolean spellCheckPIN() {
+	private boolean spellCheckPIN() {
 		boolean complit = true;
 		try {
 			int num = Integer.parseInt(pinTextField.getText());
 		} catch (NumberFormatException e) {
-			log.error("Bad number format");
+			log.error("Bad number format of PIN code");
 			complit = false;
 		}
 		return complit;
@@ -181,48 +184,49 @@ public class OAuthFrame extends JFrame {
 		PopupMenu() {
 			paste = new JMenuItem("Paste");
 			add(paste);
-			pin = new ClipBoardText().getClipboardText();
+			pin = new ClipboardText().getClipboardText();
 			paste.addActionListener(new ActionListener() {
 
 				public void actionPerformed(ActionEvent e) {
-
 					pinTextField.setText(pin);
 					log.debug("PIN entered");
-
 				}
-
 			});
-
 		}
-
-		public String getPin() {
-			return pin;
-		}
-
 	}
 
-	private class ClipBoardText {
+	private class ClipboardText {
 		private String clipboardText;
 
-		ClipBoardText() {
+		ClipboardText() {
+			String clipBoardText = initClipBoardData();
+			if (clipBoardText != null) {
+				this.clipboardText = initClipBoardData();
+			}
+			else {
+				errorLabel.setForeground(Color.RED);
+				errorLabel.setText("Bad format or clipBoardText is not exist");
+				errorLabel.setVisible(true);
+			}
+		}
 
+		private String initClipBoardData() {
 			Transferable trans = Toolkit.getDefaultToolkit().getSystemClipboard().getContents(null);
+			String text = null;
 			if (trans != null & trans.isDataFlavorSupported(DataFlavor.stringFlavor)) {
 				try {
-					clipboardText = (String) trans.getTransferData(DataFlavor.stringFlavor);
+					text = (String) trans.getTransferData(DataFlavor.stringFlavor);
 				} catch (UnsupportedFlavorException e) {
-					log.error("UnsupportedFlavorException occurs while geting String from clipboard", e);
+					log.error("Exception appears while getting text from the clipboard", e);
 				} catch (IOException e) {
-					log.error("IOException:", e);
-
+					log.error("IOException while getting text from the clipboard :", e);
 				}
 			}
-
+			return text;
 		}
 
 		public String getClipboardText() {
 			return clipboardText;
 		}
-
 	}
 }
