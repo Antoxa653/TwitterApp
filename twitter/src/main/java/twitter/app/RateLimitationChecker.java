@@ -3,6 +3,7 @@ package twitter.app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -18,24 +19,33 @@ public class RateLimitationChecker {
 
 	RateLimitationChecker(Twitter tTwitter) {
 		this.twitter = tTwitter;
+		rateLimits = initRateLimits();
+	}
+
+	public final Map<String, RateLimitStatus> initRateLimits() {
+		boolean updated = false;
+		Map<String, RateLimitStatus> map = new HashMap<String, RateLimitStatus>();
+		while (!updated) {
+			try {
+				map = twitter.getRateLimitStatus();
+				updated = true;
+			} catch (TwitterException e) {
+				log.debug("TwitterException while try to update getRateLimitStatus()", e);
+			}
+		}
+		return map;
 	}
 
 	public int checkLimitStatusForEndpoint(String str) {
 		int limit = -1;
-		try {
-			rateLimits = twitter.getRateLimitStatus();
-
-			for (String endpoint : rateLimits.keySet()) {
-				if (endpoint.equals(str)) {
-					RateLimitStatus status = rateLimits.get(endpoint);
-					log.debug("Endpoint: " + endpoint);
-					log.debug("Remaining: " + status.getRemaining());
-					limit = status.getRemaining();
-					break;
-				}
+		for (String endpoint : rateLimits.keySet()) {
+			if (endpoint.equals(str)) {
+				RateLimitStatus status = rateLimits.get(endpoint);
+				log.debug("Endpoint: " + endpoint);
+				log.debug("Remaining: " + status.getRemaining());
+				limit = status.getRemaining();
+				break;
 			}
-		} catch (TwitterException e) {
-			log.debug("FUCK");
 		}
 		return limit;
 	}

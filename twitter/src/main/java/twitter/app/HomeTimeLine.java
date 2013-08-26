@@ -44,10 +44,10 @@ public class HomeTimeLine {
 		RateLimitationChecker rateLimitationChecker = new RateLimitationChecker(twitter);
 		int limit = rateLimitationChecker.checkLimitStatusForEndpoint("/statuses/home_timeline");
 		if (limit > 2) {
-			initTimeLine();
+			initTimeLine(rateLimitationChecker);
 		}
 		if (limit == 2) {
-			initTimeLine();
+			initTimeLine(rateLimitationChecker);
 			saveTimeLineToFile();
 		}
 		if (limit < 2) {
@@ -55,7 +55,7 @@ public class HomeTimeLine {
 		}
 	}
 
-	public final void initTimeLine() {
+	public final void initTimeLine(RateLimitationChecker rateLimitationChecker) {
 		List<Status> statusList = new ArrayList<Status>();
 		timeLineList.clear();
 		try {
@@ -63,7 +63,7 @@ public class HomeTimeLine {
 			for (Status status : statusList) {
 				timeLineList.add(new Tweet(getStatusId(status), getStatusCreatorIdentifiers(status),
 						getStatusText(status), isStatusRetweet(status), isStatusRetweeted(status),
-						tweetIsReplyTo(status), getRetweetedStatusCreatorIdentifiers(status)));
+						isReplyTo(status, rateLimitationChecker), getRetweetedStatusCreatorIdentifiers(status)));
 			}
 			log.debug("TimeLineList was initialized from twitter");
 		} catch (TwitterException e) {
@@ -115,45 +115,17 @@ public class HomeTimeLine {
 		return creatorIdentifiersArray;
 	}
 
-	private List<String> tweetIsReplyTo(Status status) {
-		int rateLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/statuses/show/:id");
+	private List<String> isReplyTo(Status status, RateLimitationChecker rateLimitationChecker) {
 		List<String> replyTo = new ArrayList<String>();
-		if (rateLimit >= 2) {
-			String inReplyToStatusId = String.valueOf(status.getInReplyToStatusId());
-			if (!"-1".equals(inReplyToStatusId)) {
-				do {
-					replyTo.add(inReplyToStatusId);
-					replyTo.add(status.getInReplyToScreenName());
-					try {
-						replyTo.add(twitter.showUser(status.getInReplyToUserId()).getName());
-						replyTo.add(String.valueOf(status.getInReplyToUserId()));
-						Status str;
-						str = twitter.showStatus(Long.parseLong(inReplyToStatusId));
-						replyTo.add(parseStatusText(str.getText(), str.getURLEntities(), str.getMediaEntities()));
-						status = str;
-						inReplyToStatusId = String.valueOf(str.getInReplyToStatusId());
-					} catch (TwitterException e) {
-						log.debug("Error while getting the inReplyToStatusId status: " + e);
-					}
-
-				} while (!"-1".equals(inReplyToStatusId));
-			}
-			else {
-				replyTo.add("-1");
-				replyTo.add("-1");
-				replyTo.add("-1");
-				replyTo.add("-1");
-				replyTo.add("-1");
-			}
+		String inReplyToStatusId = String.valueOf(status.getInReplyToStatusId());
+		if (!"-1".equals(inReplyToStatusId)) {
+			replyTo.add(inReplyToStatusId);
+			replyTo.add(status.getInReplyToScreenName());
 		}
 		else {
 			replyTo.add("-1");
 			replyTo.add("-1");
-			replyTo.add("-1");
-			replyTo.add("-1");
-			replyTo.add("-1");
 		}
-
 		return replyTo;
 	}
 
@@ -240,92 +212,20 @@ public class HomeTimeLine {
 				Element tweetReplyToElement = doc.createElement("tweet_reply_to");
 				tweetElement.appendChild(tweetReplyToElement);
 
-				if (timeLineList.get(i).getTweetIsReplyTo().size() > 4) {
-					for (int j = 0; j < timeLineList.get(i).getTweetIsReplyTo().size(); j += 5) {
-						//<replytweet = i>
-						Element replytweet = doc.createElement("reply_tweet");
-						replytweet.setAttribute("reply_tweet", String.valueOf(j / 5));
-						tweetReplyToElement.appendChild(replytweet);
+				//<reply_to_status_status_id>
+				Element replyToStatusIdElement = doc.createElement("reply_to_status_id");
+				replyToStatusIdElement.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i)
+						.getTweetIsReplyTo().get(0))));
+				tweetReplyToElement.appendChild(replyToStatusIdElement);
 
-						//<reply_to_status_status_id>
-						Element replyToStatusIdElement = doc.createElement("reply_to_status_id");
-						replyToStatusIdElement.appendChild(doc.createTextNode(String
-								.valueOf(timeLineList.get(i).getTweetIsReplyTo().get(j))));
-						replytweet.appendChild(replyToStatusIdElement);
-
-						//<reply_to_user_screenname>
-						Element replyToUserScreenNameElement = doc.createElement("reply_to_user_screenname");
-						replyToUserScreenNameElement.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i)
-								.getTweetIsReplyTo()
-								.get(
-										j + 1))));
-						replytweet.appendChild(replyToUserScreenNameElement);
-
-						//<reply_to_user_name>
-						Element replyToUserNameElement = doc.createElement("reply_to_user_name");
-						replyToUserNameElement.appendChild(doc.createTextNode(String
-								.valueOf(timeLineList.get(i).getTweetIsReplyTo().get(j + 2))));
-						replytweet.appendChild(replyToUserNameElement);
-
-						//<reply_to_user_id>
-						Element replyToUserIdElement = doc.createElement("reply_to_user_id");
-						replyToUserIdElement
-								.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i).getTweetIsReplyTo()
-										.get(j + 3))));
-						replytweet.appendChild(replyToUserIdElement);
-
-						//<reply_text>
-						Element replyTextElement = doc.createElement("reply_text");
-						replyTextElement
-								.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i).getTweetIsReplyTo()
-										.get(j + 4))));
-						replytweet.appendChild(replyTextElement);
-
-					}
-				}
-				else {
-					//<replytweet = i>
-					Element replytweet = doc.createElement("reply_tweet");
-					replytweet.setAttribute("reply_tweet", "1");
-					tweetReplyToElement.appendChild(replytweet);
-
-					//<reply_to_status_status_id>
-					Element replyToStatusIdElement = doc.createElement("reply_to_status_id");
-					replyToStatusIdElement
-							.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i).getTweetIsReplyTo()
-									.get(0))));
-					replytweet.appendChild(replyToStatusIdElement);
-
-					//<reply_to_user_screenname>
-					Element replyToUserScreenNameElement = doc.createElement("reply_to_user_screenname");
-					replyToUserScreenNameElement.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i)
-							.getTweetIsReplyTo()
-							.get(
-									1))));
-					replytweet.appendChild(replyToUserScreenNameElement);
-
-					//<reply_to_user_name>
-					Element replyToUserNameElement = doc.createElement("reply_to_user_name");
-					replyToUserNameElement.appendChild(doc.createTextNode(String
-							.valueOf(timeLineList.get(i).getTweetIsReplyTo().get(2))));
-					replytweet.appendChild(replyToUserNameElement);
-
-					//<reply_to_user_id>
-					Element replyToUserIdElement = doc.createElement("reply_to_user_id");
-					replyToUserIdElement
-							.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i).getTweetIsReplyTo()
-									.get(3))));
-					replytweet.appendChild(replyToUserIdElement);
-
-					//<reply_text>
-					Element replyTextElement = doc.createElement("reply_text");
-					replyTextElement.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i)
-							.getTweetIsReplyTo().get(4))));
-					replytweet.appendChild(replyTextElement);
-
-				}
+				//<reply_to_user_screenname>
+				Element replyToUserScreenNameElement = doc.createElement("reply_to_user_screenname");
+				replyToUserScreenNameElement.appendChild(doc.createTextNode(String.valueOf(timeLineList.get(i)
+						.getTweetIsReplyTo().get(1))));
+				tweetReplyToElement.appendChild(replyToUserScreenNameElement);
 
 				//<retweeted_status_creator_identifiers>
+
 				Element retweetedStatusCreatorIdentifiersElement = doc
 						.createElement("retweeted_status_creator_identifiers");
 				tweetElement.appendChild(retweetedStatusCreatorIdentifiersElement);
@@ -362,20 +262,17 @@ public class HomeTimeLine {
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(doc);
 			StreamResult result = new StreamResult(file);
-
 			transformer.transform(source, result);
+
 			log.debug("timeLineList was saved to file TimeLine.xml");
 
 		} catch (ParserConfigurationException e) {
 			log.error("Parser Configuration error while writing TimeLine.xml file", e);
-
 		} catch (TransformerConfigurationException e) {
 			log.error("Transformer Configuration error while writing TimeLine.xml file", e);
 		} catch (TransformerException e) {
 			log.error("Exception condition while transformation proccess ", e);
-
 		}
-
 	}
 
 	private void readTimeLineFromFile(String filePath) {
@@ -387,8 +284,8 @@ public class HomeTimeLine {
 		String statusText = null;
 		boolean isStatusRetweet = false;
 		boolean isStatusRetweeted = false;
-		//getInReplyTo[0] = getInReplyToStatusId, getInReplyTo[1] = @getInReplyToScreenName, getInReplyTo[2] = getInReplyToUserName, getInReplyTo[3] = getUserID, getInReply[4] = getText;
-		List<String> tweetIsReplyTo = new ArrayList<String>();
+		//getInReplyTo[0] = getInReplyToStatusId,getInreplyTo[1]=@Screenname
+		List<String> isReplyTo;
 		//retweetedStatusCreatorIdentifiers[0] = Id, retweetedStatusCreatorIdentifiers[1] = @ScreenName, retweetedStatusCreatorIdentifiers[2] = Name, creatorIdentifiersArray[3] = getRetweetedStatus.getText();
 		String[] retweetedStatusCreatorIdentifiers = new String[4];
 		try {
@@ -403,7 +300,7 @@ public class HomeTimeLine {
 			for (int temp = 0; temp < nList.getLength(); temp++) {
 				statusCreatorIdentifiers = new String[3];
 				retweetedStatusCreatorIdentifiers = new String[4];
-				tweetIsReplyTo = new ArrayList<String>();
+				isReplyTo = new ArrayList<String>(2);
 				isStatusRetweet = false;
 				isStatusRetweeted = false;
 
@@ -438,24 +335,22 @@ public class HomeTimeLine {
 					isStatusRetweeted = Boolean.parseBoolean(eElement.getElementsByTagName("is_status_retweeted")
 							.item(0).getTextContent());
 
-					NodeList replyToList = eElement.getElementsByTagName("reply_tweet");
-					for (int k = 0; k < replyToList.getLength(); k++) {
-						Node kNode = replyToList.item(k);
-						if (kNode.getNodeType() == Node.ELEMENT_NODE) {
-							Element kElement = (Element) kNode;
+					isStatusRetweeted = Boolean.parseBoolean(eElement.getElementsByTagName("is_status_retweeted")
+							.item(0).getTextContent());
 
-							tweetIsReplyTo.add(kElement.getElementsByTagName("reply_to_status_id").item(0)
+					////////////////////////////
+					NodeList replyToList = eElement.getElementsByTagName("tweet_reply_to");
+					for (int j = 0; j < replyToList.getLength(); j++) {
+						Node gNode = replyToList.item(j);
+						if (gNode.getNodeType() == Node.ELEMENT_NODE) {
+							Element gElement = (Element) gNode;
+							isReplyTo.add(gElement.getElementsByTagName("reply_to_status_id").item(0)
 									.getTextContent());
-							tweetIsReplyTo.add(kElement.getElementsByTagName("reply_to_user_screenname")
-									.item(0).getTextContent());
-							tweetIsReplyTo.add(kElement.getElementsByTagName("reply_to_user_name")
-									.item(0).getTextContent());
-							tweetIsReplyTo.add(kElement.getElementsByTagName("reply_to_user_id").item(0)
+							isReplyTo.add(gElement.getElementsByTagName("reply_to_user_screenname").item(0)
 									.getTextContent());
-							tweetIsReplyTo.add(kElement.getElementsByTagName("reply_text").item(0).getTextContent());
-
 						}
 					}
+					///////////////////
 
 					NodeList retweetedList = eElement.getElementsByTagName("retweeted_status_creator_identifiers");
 					for (int j = 0; j < retweetedList.getLength(); j++) {
@@ -473,20 +368,49 @@ public class HomeTimeLine {
 									.getTextContent();
 							retweetedStatusCreatorIdentifiers[3] = dElement
 									.getElementsByTagName("retweeted_status_text").item(0).getTextContent();
-
 						}
 					}
-
 				}
 
 				timeLineList.add(new Tweet(statusId, statusCreatorIdentifiers, statusText, isStatusRetweet,
-						isStatusRetweeted, tweetIsReplyTo, retweetedStatusCreatorIdentifiers));
-
+						isStatusRetweeted, isReplyTo, retweetedStatusCreatorIdentifiers));
 			}
 			log.debug("timeLineList was readed from the file TimeLine.xml");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+	}
+
+	public List<String> showReplies(String reply, String sName) {
+
+		List<String> replyToList = new ArrayList<String>();
+		String screenName = sName;
+		long replyToId = Long.parseLong(reply);
+		RateLimitationChecker limit = new RateLimitationChecker(twitter);
+		int rateLimit = limit.checkLimitStatusForEndpoint("/statuses/show/:id");
+		try {
+			while (replyToId > -1) {
+				if (rateLimit > 1) {
+
+					replyToList.add(String.valueOf(replyToId));
+					replyToList.add(screenName);
+					Status status = twitter.showStatus(replyToId);
+					String name = status.getUser().getName();
+					String text = status.getText();
+					replyToList.add(name);
+					replyToList.add(text);
+					if (status.getInReplyToStatusId() != 0) {
+						replyToId = status.getInReplyToStatusId();
+						screenName = status.getInReplyToScreenName();
+					}
+				}
+			}
+
+		} catch (TwitterException e) {
+			log.debug("Exception why trying to getName of replyToUser", e);
+		}
+		return replyToList;
 
 	}
 
@@ -497,7 +421,7 @@ public class HomeTimeLine {
 		private String statusText;
 		private boolean isStatusRetweet;
 		private boolean isStatusRetweeted;
-		//getInReplyTo[0] = getInReplyToStatusId, getInReplyTo[1] = @getInReplyToScreenName, getInReplyTo[2] = getInReplyToUserName, getInReplyTo[3] = getUserID, getInReply[4] = getText;
+		//getInReplyTo[0] = getInReplyToStatusId
 		private List<String> tweetIsReplyTo;
 		//retweetedStatusCreatorIdentifiers[0] = Id, retweetedStatusCreatorIdentifiers[1] = @ScreenName, retweetedStatusCreatorIdentifiers[2] = Name, creatorIdentifiersArray[3] = getRetweetedStatus.getText();
 		private String[] retweetedStatusCreatorIdentifiers;

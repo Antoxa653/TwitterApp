@@ -161,13 +161,14 @@ public class UserDirectMessage {
 				sb.append("(Date)");
 				sb.append(s.getDate());
 				pw.println(sb.toString());
-				sb.setLength(0);
+				sb.setLength(0);				
 			}
 		} catch (FileNotFoundException e) {
 			log.error("Error while try to create SentMessages.txt file", e);
 		} finally {
 			if (pw != null) {
 				pw.close();
+				log.debug("Save setMessages to SentMessage.txt file");
 			}
 		}
 
@@ -196,6 +197,7 @@ public class UserDirectMessage {
 		} finally {
 			if (pw != null) {
 				pw.close();
+				log.debug("Save recievedMessages to RecievedMessage.txt file");
 			}
 		}
 

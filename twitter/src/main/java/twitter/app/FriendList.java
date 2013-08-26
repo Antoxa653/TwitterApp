@@ -34,6 +34,22 @@ public class FriendList {
 		return friendList;
 	}
 
+	public final void updateFriendList() {		
+		//int remainingLookUpLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/users/lookup");
+		int remainingGetFriendsIdsLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/friends/ids");
+
+		if (remainingGetFriendsIdsLimit > 2) {
+			initializeFriendList();
+		}
+		if (remainingGetFriendsIdsLimit == 2) {
+			initializeFriendList();
+			saveFriendListToFile(new ResourceFilesPath().getFriendlistFile());
+		}
+		if (remainingGetFriendsIdsLimit < 2) {
+			readFriendListFromFile(new ResourceFilesPath().getFriendlistFile());
+		}
+	}
+
 	private void initializeFriendList() {
 		friendList.clear();
 		try {
@@ -155,20 +171,6 @@ public class FriendList {
 					log.error("Stream cant be close in finally block", e);
 				}
 			}
-		}
-	}
-
-	public void updateFriendList() {
-		int remainingLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/friends/list");
-		if (remainingLimit > 2) {
-			initializeFriendList();
-		}
-		if (remainingLimit == 2) {
-			initializeFriendList();
-			saveFriendListToFile(new ResourceFilesPath().getFriendlistFile());
-		}
-		if (remainingLimit < 2) {
-			readFriendListFromFile(new ResourceFilesPath().getFriendlistFile());
 		}
 	}
 

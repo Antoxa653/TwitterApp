@@ -13,9 +13,9 @@ class TwitterInitialization {
 		if (t != null) {
 			this.twitter = t;
 			friendList = new FriendList(twitter);
-			timeLine = new HomeTimeLine(twitter);
 			userStatus = new UserStatus(twitter);
 			userDirectMessage = new UserDirectMessage(twitter);
+			timeLine = new HomeTimeLine(twitter);
 		}
 		else {
 			throw new IllegalArgumentException("Parametr t should not be null or empty. Current value is " + t);
