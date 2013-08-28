@@ -16,6 +16,7 @@ public class DocumentSizeFilter extends DocumentFilter {
 		maxCharacters = maxChars;
 	}
 
+	@Override
 	public void insertString(FilterBypass fb, int offs, String str, AttributeSet a) {
 		try {
 			if ((fb.getDocument().getLength() + str.length()) <= maxCharacters) {
@@ -25,11 +26,11 @@ public class DocumentSizeFilter extends DocumentFilter {
 				Toolkit.getDefaultToolkit().beep();
 			}
 		} catch (BadLocationException e) {
-			log.error("Bad location within document model :", e);			
+			log.error("Bad location within document model :", e);
 		}
-
 	}
 
+	@Override
 	public void replace(FilterBypass fb, int offs, int length, String str, AttributeSet a) {
 		try {
 			if ((fb.getDocument().getLength() + str.length() - length) <= maxCharacters) {
@@ -39,7 +40,7 @@ public class DocumentSizeFilter extends DocumentFilter {
 				Toolkit.getDefaultToolkit().beep();
 			}
 		} catch (BadLocationException e) {
-			log.error("Bad location within document model :", e);			
+			log.error("Bad location within document model :", e);
 		}
 	}
 }

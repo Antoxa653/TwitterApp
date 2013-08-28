@@ -3,14 +3,23 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 	<appender name="A1" class="org.apache.log4j.ConsoleAppender">
 		<param name="Target" value="System.out" />
+		<param name="Threshold" value="debug"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern"
 				value="%-5p | %d{MM-dd-yyyy HH:mm:ss.SSS} | %c(%L) - %m%n" />
 		</layout>
 	</appender>
-	<logger name="twitter.app" additivity="false">
-		<level value="debug" />
+	<appender name="default.file" class="org.apache.log4j.FileAppender">
+		<param name="file" value="C:/log/twitterApp.log" />
+		<param name="Threshold" value="error"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d{ISO8601} %-5p [%c{1}] - %m%n" />
+		</layout>
+	</appender>
+
+	<logger name="twitter.app" additivity="false">		
 		<appender-ref ref="A1" />
+		<appender-ref ref="default.file" />
 	</logger>
 	<logger name="twitter4j">
 		<level value="off" />

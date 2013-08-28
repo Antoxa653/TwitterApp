@@ -838,7 +838,7 @@ public class MainFrame extends JFrame {
 	}
 
 	private class MainFrameDataUpdateTimer {
-		private int updateTimeDelay = 180000;
+		private int updateTimeDelay = 90000;
 		private Timer timer;
 		private boolean isWorking = false;
 		private boolean isUpdated = true;
