@@ -36,6 +36,10 @@ public class HomeTimeLine {
 		updateTimeLine();
 	}
 
+	public HomeTimeLine() {
+
+	}
+
 	public List<Tweet> getTimeLineList() {
 		return timeLineList;
 	}
