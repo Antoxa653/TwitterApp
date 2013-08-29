@@ -34,8 +34,9 @@ public class FriendList {
 		return friendList;
 	}
 
-	public final void updateFriendList() {		
-		int remainingGetFriendsIdsLimit = new RateLimitationChecker(twitter).checkLimitStatusForEndpoint("/friends/ids");
+	public final void updateFriendList() {
+		int remainingGetFriendsIdsLimit = new RateLimitationChecker(twitter)
+				.checkLimitStatusForEndpoint("/friends/ids");
 
 		if (remainingGetFriendsIdsLimit > 2) {
 			initializeFriendList();
@@ -69,7 +70,7 @@ public class FriendList {
 		}
 	}
 
-	public void deleteFriend(String selectedFriend) {		
+	public void deleteFriend(String selectedFriend) {
 		boolean exist = ResourceFilesChecker.isFileExist(new ResourceFilesPath().getFriendlistFile());
 		if (exist) {
 			try {

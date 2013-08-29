@@ -1,8 +1,5 @@
 package twitter.app;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,7 +19,7 @@ public class RateLimitationChecker {
 		rateLimits = initRateLimits();
 	}
 
-	public final Map<String, RateLimitStatus> initRateLimits() {
+	private final Map<String, RateLimitStatus> initRateLimits() {
 		boolean updated = false;
 		Map<String, RateLimitStatus> map = new HashMap<String, RateLimitStatus>();
 		while (!updated) {
@@ -44,12 +41,15 @@ public class RateLimitationChecker {
 				log.debug("Endpoint: " + endpoint);
 				log.debug("Remaining: " + status.getRemaining());
 				limit = status.getRemaining();
-				break;
+				return limit;
 			}
+		}
+		if (limit == -1) {
+			throw new IllegalArgumentException("No " + str + " enpoint found - bad argument");
 		}
 		return limit;
 	}
-
+	/*
 	public void checkLimitStatusForEndpoints() {
 		PrintWriter pw = null;
 		try {
@@ -69,4 +69,5 @@ public class RateLimitationChecker {
 			pw.close();
 		}
 	}
+	*/
 }

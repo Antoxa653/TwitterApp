@@ -55,7 +55,7 @@ public class HomeTimeLine {
 		}
 	}
 
-	public final void initTimeLine(RateLimitationChecker rateLimitationChecker) {
+	private final void initTimeLine(RateLimitationChecker rateLimitationChecker) {
 		List<Status> statusList = new ArrayList<Status>();
 		timeLineList.clear();
 		try {
@@ -129,7 +129,7 @@ public class HomeTimeLine {
 		return replyTo;
 	}
 
-	private String parseStatusText(String str, URLEntity[] urlEntity, MediaEntity[] mediaEntities) {
+	public String parseStatusText(String str, URLEntity[] urlEntity, MediaEntity[] mediaEntities) {
 		String text = str;
 		URLEntity[] uEntity = urlEntity;
 		MediaEntity[] mEntity = mediaEntities;
