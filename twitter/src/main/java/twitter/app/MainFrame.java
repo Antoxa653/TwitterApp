@@ -923,16 +923,22 @@ public class MainFrame extends JFrame {
 			String regexWord = "\\s|^[a-zа-яА-Я0-9A-Z]*[^http://]";
 			int startOffset = textArea.viewToModel(new Point(x, y));
 			String[] array = text.split(regexWord);
-			for (String s : array) {
-				int start = text.indexOf(s);
-				int finish = start + s.length();
+			for (int i = 0; i < array.length; i++) {
+				int start = 0;
+				if (i >= 1 && array[i - 1].equals(array[i])) {
+					start = text.lastIndexOf(array[i]);
+				}
+				else {
+					start = text.indexOf(array[i]);
+				}
+				int finish = start + array[i].length();
 				if (start <= startOffset && startOffset <= finish) {
 					goInto = false;
-					if (s.matches(regexUrl)) {
+					if (array[i].matches(regexUrl)) {
 						Desktop desktop = Desktop.getDesktop();
 						if (desktop.isSupported(Desktop.Action.BROWSE)) {
 							try {
-								String urlString = s;
+								String urlString = array[i];
 								URL url = new URL(urlString);
 								desktop.browse(url.toURI());
 								break;

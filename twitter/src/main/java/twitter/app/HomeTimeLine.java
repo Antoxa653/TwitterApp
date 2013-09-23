@@ -107,7 +107,7 @@ public class HomeTimeLine {
 			creatorIdentifiersArray[1] = status.getRetweetedStatus().getUser().getScreenName();
 			creatorIdentifiersArray[2] = status.getRetweetedStatus().getUser().getName();
 			creatorIdentifiersArray[3] = parseStatusText(status.getRetweetedStatus().getText(),
-					status.getURLEntities(), status.getMediaEntities());
+					status.getRetweetedStatus().getURLEntities(), status.getRetweetedStatus().getMediaEntities());
 
 		}
 		else {
@@ -133,26 +133,44 @@ public class HomeTimeLine {
 		return replyTo;
 	}
 
-	public String parseStatusText(String str, URLEntity[] urlEntity, MediaEntity[] mediaEntities) {
+	public String parseStatusText(String text, URLEntity[] urlEntity, MediaEntity[] mediaEntities) {
+		String regex = "RT{1}[\\s]*@{1}[\\w]*[:]?|\\s+";			
+		String[] statusTextArray = text.split(regex);
+		StringBuilder sb = new StringBuilder();
+		for (String s : statusTextArray) {			
+			sb.append(s);
+			sb.append(" ");
+		}
+		
+		/*
 		String text = str;
 		URLEntity[] uEntity = urlEntity;
 		MediaEntity[] mEntity = mediaEntities;
-		String regex = "http://{1}[a-zA-Z0-9./-]*[^http://][\\s]*|RT{1}\\s{1}@{1}[a-zA-Z0-9]*:{1}|https://{1}[a-zA-Z0-9./-]*[^http://][\\s]*";
+		//String regex = "http://{1}[a-zA-Z0-9./-]*[^http://][\\s]*|RT{1}\\s{1}@{1}[a-zA-Z0-9]*:{1}|https://{1}[a-zA-Z0-9./-]*[^http://][\\s]*";
+		String regex = "([:]?[\\s]*http://[\\w./-]*[^http:])|https://[\\w/.-]*|RT{1}[\\s]*@{1}[\\w]*[:]?|\\s+";
 		String[] statusTextArray = text.split(regex);
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < statusTextArray.length; i++) {
 			if (!"".equals(statusTextArray[i])) {
 				sb.append(statusTextArray[i]);
+				sb.append(" ");
+
 			}
 		}
-		for (int i = 0; i < uEntity.length; i++) {
-			sb.append(" ");
-			sb.append(uEntity[i].getURL());
+		if (uEntity.length > 0) {
+			for (int i = 0; i < uEntity.length; i++) {
+				sb.append(" ");				
+				sb.append(uEntity[i].getURL());
+			}
 		}
-		for (int i = 0; i < mEntity.length; i++) {
-			sb.append(" ");
-			sb.append(mEntity[i].getURL());
+		if (mEntity.length > 0) {
+			for (int i = 0; i < mEntity.length; i++) {
+				sb.append(" ");
+				sb.append(mEntity[i].getURL());
+			}
 		}
+		*/
+
 		return sb.toString().trim();
 	}
 
